@@ -1,0 +1,8 @@
+#!/bin/bash
+rm paper1.aux
+rm paper1.bbl
+pdflatex paper1
+bibtex paper1
+pdflatex paper1
+pdflatex paper1
+#dvipdf adapt_draft11.dvi adapt_draft11.pdf
