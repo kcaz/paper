@@ -1,66 +1,6 @@
-<<<<<<< HEAD
-\documentclass[11pt]{article}
-
-\usepackage{graphicx}
-\usepackage{amssymb,amsmath}
-\usepackage{textcomp}
-
-%\usepackage{subcaption}
-%\usepackage{float}
-\usepackage{setspace}
-\usepackage{fullpage}
-\usepackage[font=scriptsize]{caption}
-%\usepackage{fullpage}
-%\setcounter{secnumdepth}{1}
-\begin{document}
-
-\title{GRN inference in multiple species}
-\author{Kari Y. Lam, Zachary M. Westrick, Others TBA}
-\maketitle
-
-\begin{abstract}
-I'm MC Zack and I've got something to say. Hey. Hey. Hey. Hey. Hey
-\end{abstract}
-
-\section{Introduction}
-
-\begin{figure}
-\begin{center}
-  \includegraphics[scale=0.45]{simulated.png}
-  \caption{\label{fig:figure1} This is what a figure looks like}
-  \end{center}
-\end{figure}
-
-\section{Methods}
-\subsection{GRN}
-are good
-\subsection{fused GRN}
-yeees
-\subsection{Simulated data}
-Generation of simulated data begins with the production of random orthology mappings. We produce a one-to-one orthology by pairing random genes until a specified fraction have been assigned orthologs. This process is carried out seperately for TFs and non-TF genes, so that TFs and non-TF genes are never assigned to be orthologous. We then produce a pair of random networks ($B^1$ and $B^2$) as follows. For each unfilled entry in $B^1$ or $B^2$, we enumerate the set $C$ consisting of the entry along with every entry in either matrix to which it is fused. With probability equal to the sparsity rate we assign every entry in $C$ to be 0, otherwise we sample a value $v \sim \mathcal{N}(0,1)$ and independently assign each entry in $C$ to $v + \mathcal{N}(0, \sigma_f^2)$. $\sigma_f$ is a parameter that controls the distribution of differences in the values of fused coefficients, so that the nonzero coefficients of $B^1, B^2$ are distributed as $\mathcal{N}(0, 1 + \sigma_f^2)$.
-
-Given a network $B$, we generate $N$ samples of gene expressions at each of two timepoints. The condition by gene expression matrix for timepoint one, $Y_{T1}$, is sampled randomly from a multivariate Gaussian distribution with identity covariance matrix. $X_{T1}$ is the TF expression sub-matrix of $Y_{T1}$, and consists of columns of $Y_{T1}$ that correspond to TFs. The gene expression matrix at timepoint two, $Y_{T2}$ is sampled as $Y_{T2} = Y_{T1} + BX_{T1}$. This process is carried out separately for each network. 
-
-Following generation of simulated data, we may introduce error into the orthology mapping. This can take the form of discarding a specified fraction of true orthologies (governed by a false-negative rate), or by introducing random false orthologies (governed by a false-positive rate). For convenience, the false-positive rate is specified in units of the number of true orthologs, and not the number of possible orthologs. Priors are defined by the support of $B$. We can introduce false-positive or false-negative errors, as in the orthology mapping, in order to study the effect of faulty prior information. 
-\subsection{Bacterial data}
-is good
-Look an equation array
-\begin{equation}
-\begin{array}{l}
-R_i^{\mathrm{input}}(\theta) = c g_i^{\mathrm{input}}\exp(-(\theta - \theta_i)^2 / (2\sigma^2_{\mathrm{input}}))
-\\
-R_i^{\mathrm{output}}(\theta) = g_i^{\mathrm{output}}\sum_{j=0}^N R_j^{\mathrm{input}}(\theta) \exp(-(\theta_i - \theta_j)^2/(2\sigma^2_{\mathrm{output}})) .
-\end{array}
-\end{equation}
-\bibliographystyle{plain}
-\bibliography{paper}
-
-\end{document}
-
-=======
 \documentclass[11pt]{article}
 \usepackage{graphicx}
-\usepackage{mathtools}
+%\usepackage{mathtools}
 \usepackage{amssymb,amsmath}
 \usepackage{textcomp}
 \DeclareMathOperator*{\argmin}{arg\,min}
@@ -93,34 +33,38 @@ I'm MC Zack and I've got something to say. Hey. Hey. Hey. Hey. Hey
 
 \section{Methods}
 \subsection{GRN}
-We model gene regulatory networks using ordinary differential equations where the change in expression of some gene $x_{i}$ is described as a linear combination of regulators:
+We begin with an existing framework for estimating the interaction weights in a gene regulatory network (GRN). In the Inferelator algorithm, linear differential equations are used to model changes in gene expression. The rate at which the expression of gene $i$, $x_i$, changes is governed by degradation of existing transcripts with rate $\alpha$ plus a linear combination of transcription factor (TF) expressions.
 \begin{equation}
-\frac{\mathrm d}{\mathrm d t} = -\alpha_{i}x_{i} + \sum \beta_{i,j}x_{j}
+\frac{\mathrm d}{\mathrm d t} x_i = -\alpha_{i}x_{i} + \sum \beta_{i,j}x_{j}
 \end{equation}
-where $\alpha$ is the degradation rage and $\beta$ is a set of parameters to be estimated.
+$\beta$, the matrix defining the influence of each TF on each gene, is what we hope to estimate. The decay rate $\alpha$ is treated as fixed for all genes, and is set assuming a time-constant of 10 minutes [CITATIONS], as in [CITATIONS]. Let $x_i(t)$ be the expression of gene $i$ at time $t$. Given time-series data on the expression of gene $i$ at timepoints $t_k$ and $t_{k+1}$, we can approximate the rate of change of $x_i$ as $x_i'(t_k)=\frac{x_i(t_{k+1})-x_i(t_k)}{t_{k+1}-t_k}$. This gives us, for each gene $i$ and time $t_{k}$ an equation
 
-\noindent We approach the learning of the $\beta$ matrix using regression. We solve
 \begin{equation}
-\argmin_\beta\vert \vert X\beta - Y_2 \vert \vert ^2
+\frac{x_i(t_k)-x_i(t_1)}{t_2-t_1} + \alpha_{i}x_{i}(t_k)= \sum \beta_{i,j}x_{j}(t_k)
 \end{equation}
-where the matrix $X \in R^{n \times k}$ is the expression matrix with $n$ conditions and $k$ transcription factors. $X$ is a submatrix of $Y \in R^{n \times m}$, the gene expression matrix with $m$ genes. Typically, $n < k < m$, so this problem is ill-posed without regularization. We use ridge regression and solve
+\noindent We can summarize these equations in matrix form as
+\begin{equation}
+Y = \beta X
+\end{equation}
+\noindent We approach the learning of the $\beta$ matrix using regression. Because there are typically far fewer conditions than possible regressors (TFs), we introduce a ridge regularization constraint with weight $\lambda_R$ and solve
 \begin{equation}
 \argmin_\beta\vert \vert X\beta - Y_2 \vert \vert ^2 + \lambda_R \vert \vert \beta \vert \vert ^2
-\end{equation} 
-with $\lambda_R$ as the weight of the regularization term.
+\end{equation}
+This is essentially the same basic formulation as was used in the Inferelator algorithm, which we extend to the case of simultaneously inferring the GRNs of multiple species. 
 
 \subsection{Fused GRN}
-Related species are expected to be governed by similar but not necessarily identical gene regulatory networks. Pooling data from multiple species drowns out species-specific mechanisms, but learning GRNs separately limits the availability of training data. We approach the problem of cross-species GRN inference by learning networks simultaneously with an additional constraint in the form of an L2 penalty on differences between interactions between orthologous TF, gene pairs. The assumption is that orthologous genes play analogous roles in their respective GRNs, and therefore, the interactions between orthologous TF, gene pairs should have similar weights. \\
-
-We solve
+Related species are expected to be governed by similar but not necessarily identical gene regulatory networks. We approach the problem of cross-species GRN inference by introducing constraints into the above regression formulation to penalize differences between interaction weights that are expected to be similar to one another based on gene orthology. We can then solve the penalized regression problems simultaneously, in order to obtain a GRN for each species. Consider the case of organisms $A$ and $B$, governed by GRNs $\beta^A$ and $\beta^B$ (the following approach applies equally well to more than two species). If TF $g^A$ in organism $A$ and TF $h^B$ in organism $B$ are orthologs, and gene $k^A$ and $l^B$ are orthologs, then we expect that the $g^A \rightarrow k^A$ interaction weight should be similar to the $h^B \rightarrow l^B$ interaction weight, and we introduce a fusion constraint between these analogous interactions. In terms of the above regression formulation, we expect that $\beta^A_{g,h} \approx \beta^B_{k,l}$, and include a penalty term $\lambda_S(\beta^A_{g,h} - \beta^B_{k,l})^2$ to the quantity being minimized in order to ensure similarity. The parameter $\lambda_S$ controls how highly to penalize differences between fused coefficients. This gives us the final equation to be minimized 
 \begin{equation}
-\argmin_\beta \vert \vert X^1 \beta^1 - Y_2 ^1 \vert \vert ^2 + \vert \vert X^2 \beta^2 - Y_2 ^2 \vert \vert ^2 + \lambda_R \vert \vert \beta^1 + \beta^2 \vert \vert ^2 + \lambda_S \sum\limits_{i^1, i^2, j^1, j^2 \in C} (\beta^1_{i^1,j^1} - \beta^2_{i^2,j^2})^2
+\argmin_{(\beta^A, \beta^B)} \displaystyle\sum_{S \in (A, B)} \vert \vert X^S\beta^S - Y^S \vert \vert ^2 + \lambda_R \vert \vert \beta^S \vert \vert ^2 + \displaystyle \sum_{\beta^{S_1}_{g,h} \approx \beta^{S_2}_{k,l}} \lambda_S(\beta^{S_1}_{g,h} - \beta^{S_2}_{k,l})^2
 \end{equation}
-where $C$ is the set of orthologous TF, gene pairs.\newline
+Where the second sum is over pairs of interactions with fusion constraints. Note that each term in the quantity being minimized is an L2 norm of a linear combination of gene expressions, so the entire problem can be solved through linear regression with a suitable design matrix [DETAILS SHOULD GO SOMEWHERE ELSE, OR NOWHERE]. Because pairs of genes can be solved independently as long as they are not linked by fusion constraints, or a chain of fusion constraints, the problem of cross-species GRN inference decomposes into a large number of manageable regression problems as long as the orthology mappings are sparse. 
 
-If $\lambda_S = 0$, this is equivalent to solving the two regression problems separately, while $\lambda_S = \infty$ corresponds to requiring equality between constrained entries of $B^1, B^2$ where in the case of 1 to 1 correspondence weights, this is equivalent to pooling the data for the two species and solving one regression problem. \\
+[DIGRESSION?]
 
-We use an L2 norm because it can be solved in closed form and because the structure of differences between corresponding weights may not be sparse, but should simply be made small.
+When there is a one-to-one orthology between the species being considered (ie different cell-lines of the same organism), the choice of $\lambda_S$ allows one to interpolate between fitting each network independently ($\lambda_S=0$) and pooling data together as if it came from one source ($\lambda_S=\inf$). Part of the appeal of the approach, however, is that it allows pooling of data even when there is incomplete orthology. By introducing constraints on the similarity of individual interactions, rather than on the networks as a whole [CITE IBM?], we can pool some information across species even when an arbitrarily small fraction of genes have orthologs. This is particularly useful when dealing with a large number of species; pairwise orthologies may be nearly complete even when the number of genes present in every organism is small. 
+\subsubsection{Equivalent prior}
+I want to talk about the fusion constraints as a Gaussian prior, and talk about the adjustment stuff
+
 
 \subsection{Simulated data}
 Generation of simulated data begins with the production of random orthology mappings. We produce a one-to-one orthology by pairing random genes until a specified fraction have been assigned orthologs. This process is carried out separately for TFs and non-TF genes, so that TFs and non-TF genes are never assigned to be orthologous. We then produce a pair of random networks ($B^1$ and $B^2$) as follows. For each unfilled entry in $B^1$ or $B^2$, we enumerate the set $C$ consisting of the entry along with every entry in either matrix to which it is fused. With probability equal to the sparsity rate we assign every entry in $C$ to be 0, otherwise we sample a value $v \sim \mathcal{N}(0,1)$ and independently assign each entry in $C$ to $v + \mathcal{N}(0, \sigma_f^2)$. $\sigma_f$ is a parameter that controls the distribution of differences in the values of fused coefficients, so that the nonzero coefficients of $B^1, B^2$ are distributed as $\mathcal{N}(0, 1 + \sigma_f^2)$.
