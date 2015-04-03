@@ -15,11 +15,11 @@
 \begin{document}
 
 \title{GRN inference in multiple species}
-\author{Kari Y. Lam, Zachary M. Westrick, Others TBA}
+\author{Kari Y. Lam, Zachary M. Westrick, Frank Underwood}
 \maketitle
 
 \begin{abstract}
-I'm MC Zack and I've got something to say. Hey. Hey. Hey. Hey. Hey
+HELLOOOOOOOOOOOOOOOOOOOOOOOO
 \end{abstract}
 
 \section{Introduction}
@@ -37,10 +37,10 @@ We begin with an existing framework for estimating the interaction weights in a 
 \begin{equation}
 \frac{\mathrm d}{\mathrm d t} x_i = -\alpha_{i}x_{i} + \sum \beta_{i,j}x_{j}
 \end{equation}
-$\beta$, the matrix defining the influence of each TF on each gene, is what we hope to estimate. The decay rate $\alpha$ is treated as fixed for all genes, and is set assuming a time-constant of 10 minutes [CITATIONS], as in [CITATIONS]. Let $x_i(t)$ be the expression of gene $i$ at time $t$. Given time-series data on the expression of gene $i$ at timepoints $t_k$ and $t_{k+1}$, we can approximate the rate of change of $x_i$ as $x_i'(t_k)=\frac{x_i(t_{k+1})-x_i(t_k)}{t_{k+1}-t_k}$. This gives us, for each gene $i$ and time $t_{k}$ an equation
+We are interested in learning $\beta$, the matrix defining the influence of each TF on each gene. We fix the decay rate $\alpha$ for all genes, and set it assuming a time-constant of 10 minutes [CITATIONS], as in [CITATIONS]. Let $x_i(t)$ be the expression of gene $i$ at time $t$. Given time-series data on the expression of gene $i$ at timepoints $t_k$ and $t_{k+1}$, we can approximate the rate of change of $x_i$ as $x_i'(t_k)=\frac{x_i(t_{k+1})-x_i(t_k)}{t_{k+1}-t_k}$. This gives us, for each gene $i$ and time $t_{k}$ an equation
 
 \begin{equation}
-\frac{x_i(t_k)-x_i(t_1)}{t_2-t_1} + \alpha_{i}x_{i}(t_k)= \sum \beta_{i,j}x_{j}(t_k)
+\frac{x_i(t_{k+1})-x_i(t_k)}{t_{k+1}-t_k} + \alpha_{i}x_{i}(t_k)= \sum \beta_{i,j}x_{j}(t_k)
 \end{equation}
 \noindent We can summarize these equations in matrix form as
 \begin{equation}
@@ -53,11 +53,11 @@ Y = \beta X
 This is essentially the same basic formulation as was used in the Inferelator algorithm, which we extend to the case of simultaneously inferring the GRNs of multiple species. 
 
 \subsection{Fused GRN}
-Related species are expected to be governed by similar but not necessarily identical gene regulatory networks. We approach the problem of cross-species GRN inference by introducing constraints into the above regression formulation to penalize differences between interaction weights that are expected to be similar to one another based on gene orthology. We can then solve the penalized regression problems simultaneously, in order to obtain a GRN for each species. Consider the case of organisms $A$ and $B$, governed by GRNs $\beta^A$ and $\beta^B$ (the following approach applies equally well to more than two species). If TF $g^A$ in organism $A$ and TF $h^B$ in organism $B$ are orthologs, and gene $k^A$ and $l^B$ are orthologs, then we expect that the $g^A \rightarrow k^A$ interaction weight should be similar to the $h^B \rightarrow l^B$ interaction weight, and we introduce a fusion constraint between these analogous interactions. In terms of the above regression formulation, we expect that $\beta^A_{g,h} \approx \beta^B_{k,l}$, and include a penalty term $\lambda_S(\beta^A_{g,h} - \beta^B_{k,l})^2$ to the quantity being minimized in order to ensure similarity. The parameter $\lambda_S$ controls how highly to penalize differences between fused coefficients. This gives us the final equation to be minimized 
+We expect related species to be governed by similar but not necessarily identical gene regulatory networks. We approach the problem of cross-species GRN inference by introducing constraints into the above regression formulation to penalize differences between interaction weights that are expected to be similar based on gene orthology. We can then solve the penalized regression problems simultaneously, in order to obtain a GRN for each species. Consider the case of organisms $A$ and $B$, governed by GRNs $\beta^A$ and $\beta^B$ (the following approach applies equally well to more than two species but for simplicity we continue with the case of two species). If TF $g^A$ in organism $A$ and TF $h^B$ in organism $B$ are orthologs, and gene $k^A$ and $l^B$ are orthologs, then we expect that the $g^A \rightarrow k^A$ interaction weight should be similar to the $h^B \rightarrow l^B$ interaction weight, and we introduce a fusion constraint between these analogous interactions. In terms of the above regression formulation, we expect that $\beta^A_{g,k} \approx \beta^B_{h,l}$, and include a penalty term $\lambda_S(\beta^A_{g,k} - \beta^B_{h,l})^2$ to the quantity being minimized in order to ensure similarity. The parameter $\lambda_S$ controls how highly to penalize differences between fused coefficients. This gives us the final equation to be minimized 
 \begin{equation}
-\argmin_{(\beta^A, \beta^B)} \displaystyle\sum_{S \in (A, B)} \vert \vert X^S\beta^S - Y^S \vert \vert ^2 + \lambda_R \vert \vert \beta^S \vert \vert ^2 + \displaystyle \sum_{\beta^{S_1}_{g,h} \approx \beta^{S_2}_{k,l}} \lambda_S(\beta^{S_1}_{g,h} - \beta^{S_2}_{k,l})^2
+\argmin_{(\beta^A, \beta^B)} \displaystyle\sum_{S \in (A, B)} \vert \vert X^S\beta^S - Y^S \vert \vert ^2 + \lambda_R \vert \vert \beta^S \vert \vert ^2 + \displaystyle \sum_{\beta^{S_1}_{g,k} \approx \beta^{S_2}_{h,l}} \lambda_S(\beta^{S_1}_{g,k} - \beta^{S_2}_{h,l})^2
 \end{equation}
-Where the second sum is over pairs of interactions with fusion constraints. Note that each term in the quantity being minimized is an L2 norm of a linear combination of gene expressions, so the entire problem can be solved through linear regression with a suitable design matrix [DETAILS SHOULD GO SOMEWHERE ELSE, OR NOWHERE]. Because pairs of genes can be solved independently as long as they are not linked by fusion constraints, or a chain of fusion constraints, the problem of cross-species GRN inference decomposes into a large number of manageable regression problems as long as the orthology mappings are sparse. 
+Where the second sum is over pairs of interactions with fusion constraints. Note that each term in the quantity being minimized is an L2 norm of a linear combination of gene expressions, so the entire problem can be solved through linear regression with a suitable design matrix [DETAILS SHOULD GO SOMEWHERE ELSE, OR NOWHERE]. The $\beta$ vectors corresponding to a pair of genes can be solved independently as long as the pair is not linked by fusion constraints, or a chain of fusion constraints; thus the problem of cross-species GRN inference decomposes into a large number of manageable regression problems as long as the orthology mappings are sparse.
 
 [DIGRESSION?]
 
@@ -65,6 +65,29 @@ When there is a one-to-one orthology between the species being considered (ie di
 \subsubsection{Equivalent prior}
 I want to talk about the fusion constraints as a Gaussian prior, and talk about the adjustment stuff
 
+\subsection{Alternative penalty functions}
+Sometimes gene orthology is not a good predictor of functional similarity. To simultaneously learn when a gene's function has diverged from that of its ortholog, and improve model selection, we consider alternative penalized least squares approaches. Our fusion penalty pulls beta values for analogous interactions towards each other; since we use an L2 penalty, interaction weights which differ from each other the most are excessively penalized. SCAD [Fan Li 2001] and MCP [Zhang] are two alternative penalties which diminish this bias. Fan and Li point out that the bias can be removed by choosing a constant penalty beyond some threshold. This is analogous to 'unfusing' certain interactions, and easing up on the demand that certain beta values be close in value when doing so strongly opposes minimizing the mean squared error component of the penalty function. SCAD and MCP both use an L1 penalty near the origin, setting small estimated coefficients to zero and choosing a sparse solution. Because we do not expect most fused beta values to be identical, but rather similar, we amend the alternative fusion penalty to be L2 near the origin, resulting in:
+\begin{equation}
+p_{\lambda,\gamma}(\theta) = \left\{
+    \begin{array}{lr}
+    \lambda\theta^2-{ \theta^2 \over 2\gamma} & \text{if } \theta \leq \gamma\lambda\\
+    {1 \over 2}\gamma\lambda^2 & \text{if } \theta > \gamma\lambda
+    \end{array}
+    \right. 
+\end{equation}
+It is more intuitive to think about the derivative of the penalty:
+\begin{equation}
+p'_{\lambda,\gamma}(\theta) = \left\{
+    \begin{array}{lr}
+    2\lambda\theta - {\theta \over \gamma} & \text{if } \theta \leq \gamma\lambda\\
+    0 & \text{if } \theta > \gamma\lambda
+    \end{array}
+    \right.
+\end{equation}
+    
+
+The MCP-like penalty begins by applying the same rate of penalization as the L2, but continuously relaxes the penalization until the rate drops to 0 and the penalty saturates. 
+As in [Fan Li], we use local quadratic approximation and solve by iteratively computing ridge regression. 
 
 \subsection{Simulated data}
 Generation of simulated data begins with the production of random orthology mappings. We produce a one-to-one orthology by pairing random genes until a specified fraction have been assigned orthologs. This process is carried out separately for TFs and non-TF genes, so that TFs and non-TF genes are never assigned to be orthologous. We then produce a pair of random networks ($B^1$ and $B^2$) as follows. For each unfilled entry in $B^1$ or $B^2$, we enumerate the set $C$ consisting of the entry along with every entry in either matrix to which it is fused. With probability equal to the sparsity rate we assign every entry in $C$ to be 0, otherwise we sample a value $v \sim \mathcal{N}(0,1)$ and independently assign each entry in $C$ to $v + \mathcal{N}(0, \sigma_f^2)$. $\sigma_f$ is a parameter that controls the distribution of differences in the values of fused coefficients, so that the nonzero coefficients of $B^1, B^2$ are distributed as $\mathcal{N}(0, 1 + \sigma_f^2)$.
@@ -76,6 +99,8 @@ Following generation of simulated data, we may introduce error into the ortholog
 For the purposes of evaluating simulated network recovery, we define a gold standard network as the support of the beta matrices. Priors used in network inference are interactions from the gold standard. The list of priors can be be manipulated to include false positives and false negatives as with the generation of orthologs. 
 
 \subsection{Bacterial data}
+We 
+
 is good
 Look an equation array
 \begin{equation}
