@@ -19,7 +19,7 @@
 \maketitle
 
 \begin{abstract}
-HELLOOOOOOOOOOOOOOOOOOOOOOOO
+sup sup sup
 \end{abstract}
 
 \section{Introduction}
@@ -66,7 +66,7 @@ When there is a one-to-one orthology between the species being considered (ie di
 I want to talk about the fusion constraints as a Gaussian prior, and talk about the adjustment stuff
 
 \subsection{Alternative penalty functions}
-Sometimes gene orthology is not a good predictor of functional similarity. To simultaneously learn when a gene's function has diverged from that of its ortholog, and improve model selection, we consider alternative penalized least squares approaches. Our fusion penalty pulls beta values for analogous interactions towards each other; since we use an L2 penalty, interaction weights which differ from each other the most are excessively penalized. SCAD [Fan Li 2001] and MCP [Zhang] are two alternative penalties which diminish this bias. Fan and Li point out that the bias can be removed by choosing a constant penalty beyond some threshold. This is analogous to 'unfusing' certain interactions, and easing up on the demand that certain beta values be close in value when doing so strongly opposes minimizing the mean squared error component of the penalty function. SCAD and MCP both use an L1 penalty near the origin, setting small estimated coefficients to zero and choosing a sparse solution. Because we do not expect most fused beta values to be identical, but rather similar, we amend the alternative fusion penalty to be L2 near the origin, resulting in:
+Sometimes gene orthology is not a good predictor of functional similarity. To learn when a gene's function has diverged from that of its ortholog and to improve model selection, we consider alternative penalized least squares approaches. Our fusion penalty pulls beta values for analogous interactions towards each other; since we use an L2 penalty, interaction weights which differ from each other the most are excessively penalized. Fan and Li point out that the bias can be removed by choosing a constant penalty beyond some threshold. This is analogous to 'unfusing' certain interactions, and easing up on the demand that certain beta values be close in value when doing so is in strong opposition to minimizing the mean squared error component of the penalty function. SCAD [Fan Li 2001] and MCP [Zhang] are two alternative penalties which have this feature. We make some modifications and test both. Both use an L1 penalty near the origin, setting small estimated coefficients to zero and choosing a sparse solution. Because we do not expect most fused beta values to be identical, but rather similar, we amend the alternative fusion penalty to be L2 near the origin, resulting in modified MCP:
 \begin{equation}
 p_{\lambda,\gamma}(\theta) = \left\{
     \begin{array}{lr}
@@ -87,6 +87,28 @@ p'_{\lambda,\gamma}(\theta) = \left\{
     
 
 The MCP-like penalty begins by applying the same rate of penalization as the L2, but continuously relaxes the penalization until the rate drops to 0 and the penalty saturates. 
+
+The rationale behind SCAD is similar: both penalties apply the same rate of penalization as the lasso and reduce that rate to 0 as the absolute value of $\theta$ grows. What differs is the transition between the lasso and the flat penalty. In SCAD, both the derivative of the penalty as well as where the transition occurs depend on the same parameter, $\lambda$. In our version, we decouple these, and as with MCP, we alter the penalty so that it is L2-like near the origin to get:
+
+\begin{equation}
+p_{\lambda,\gamma}(\theta) = \left\{
+    \begin{array}{lr}
+    \lambda\theta^2 & \text{if } \theta \leq {a \over 2}\\
+    {a\lambda\theta - 0.5(\theta^2 + \lambda^2) \over a - 1} & \text{if } \lambda < \theta \leq {a \over 2}\\
+    {\lambda^2(a^2-1) \over 2(a-1)} & \text{if } \theta > a
+    \end{array}
+    \right. 
+\end{equation}
+
+\begin{equation}
+p'_{\lambda,\gamma}(\theta) = \left\{
+    \begin{array}{lr}
+    2\lambda\theta & \text{if } \theta \leq \lambda\\
+    \text{max}(\lambda_S(a-\theta),0) & \text{if } \theta > {a \over 2}
+    \end{array}
+    \right.
+\end{equation}
+
 As in [Fan Li], we use local quadratic approximation and solve by iteratively computing ridge regression. 
 
 \subsection{Simulated data}
