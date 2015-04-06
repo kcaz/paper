@@ -57,7 +57,7 @@ Related species are expected to be governed by similar but not necessarily ident
 \begin{equation}
 \argmin_{(\beta^A, \beta^B)} \displaystyle\sum_{S \in (A, B)} \vert \vert X^S\beta^S - Y^S \vert \vert ^2 + \lambda_R \vert \vert \beta^S \vert \vert ^2 + \displaystyle \sum_{\beta^{S_1}_{g,h} \approx \beta^{S_2}_{k,l}} \lambda_S(\beta^{S_1}_{g,h} - \beta^{S_2}_{k,l})^2
 \end{equation}
-Where the second sum is over pairs of interactions with fusion constraints. Note that each term in the quantity being minimized is an L2 norm of a linear combination of gene expressions, so the entire problem can be solved through linear regression with a suitable design matrix [DETAILS SHOULD GO SOMEWHERE ELSE, OR NOWHERE]. Because pairs of genes can be solved independently as long as they are not linked by fusion constraints, or a chain of fusion constraints, the problem of cross-species GRN inference decomposes into a large number of manageable regression problems as long as the orthology mappings are sparse. 
+Where the second sum is over pairs of interactions with fusion constraints. Note that each term in the quantity being minimized is an L2 norm of a linear combination of gene expressions, so the entire problem can be solved through linear regression with a suitable design matrix[DETAILS SHOULD GO SOMEWHERE or nowhere?]. Because pairs of genes can be solved independently as long as they are not linked by fusion constraints, or a chain of fusion constraints, the problem of cross-species GRN inference decomposes into a large number of manageable regression problems as long as the orthology mappings are sparse. 
 
 [DIGRESSION?]
 
@@ -90,4 +90,4 @@ R_i^{\mathrm{output}}(\theta) = g_i^{\mathrm{output}}\sum_{j=0}^N R_j^{\mathrm{i
 
 \end{document}
 
->>>>>>> 34faf0e6aea8fc5a3af9cb49bfcff0b2e3eaa7ed
+
