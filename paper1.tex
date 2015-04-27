@@ -82,7 +82,7 @@ p'_{\lambda,a}(\theta) = \left\{
     \right.
 \end{equation}
 
-We also implement MCP [IS THIS MODIFIED TO BE L2 like at the origin?]
+We also implement MCP:
 
 \begin{equation}
 p_{\lambda,\gamma}(\theta) = \left\{
@@ -104,13 +104,13 @@ p'_{\lambda,\gamma}(\theta) = \left\{
     \right.
 \end{equation}
     
-As in [Fan Li], we use solve using iterative local quadratic approximation. Specifically,
+As in [Fan Li], we use solve using iterative local quadratic approximation. 
+
+Specifically, $\beta^S(t)$ is the network on iteration $t$. 
 
 \begin{equation}
 \begin{array}{l}
-\beta^S(t)\text{ is the network on iteration } t
-\\
-\text{for each fused  } B^{S_1}_{g,k} \approx B^{S_2}_{h,l}  \text{ we define } 
+\text{for each fused  } B^{S_1}_{g,k} \approx B^{S_2}_{h,l}  \text{ we define: } 
 \\
 \theta(0)=0
 \\
@@ -118,9 +118,10 @@ As in [Fan Li], we use solve using iterative local quadratic approximation. Spec
 \\
 \text{and introduce a fusion constraint } \lambda = \frac{p'(\theta(t))}{2\theta(t)} 
 \\
-\beta^S(t+1) \text{ is obtained by fitting the ridge-fused model with fusion constraints given by the above }\lambda s
 \end{array}
 \end{equation}
+
+$\beta^S(t+1)$ is obtained by fitting the ridge-fused model with fusion constraints given by the above $\lambda_S$. This is nice because all our penalties can be treated as L2 and therefore retain the properties of ridge regression. 
 
 
 \subsection{Simulated data}
@@ -132,8 +133,17 @@ Following generation of simulated data, we may introduce error into the ortholog
 
 For the purposes of evaluating simulated network recovery, we define a gold standard network as the support of the beta matrices. Priors used in network inference are interactions from the gold standard. The list of priors can be be manipulated to include false positives and false negatives as with the generation of orthologs. 
 
+\subsection{Optimization and model selection}
+
 \subsection{Bacterial data}
 TBA
+
+\section{Results}
+
+\subsection{Fusing similar network has the same effect as increasing the number of experimental conditions}
+When the sample size of gene expression increases, the performance
+
+\subsection{SCAD successfully identifies and unfuses 'neofunctionalized' genes}
 
 \bibliographystyle{plain}
 \bibliography{paper}
