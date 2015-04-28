@@ -139,11 +139,19 @@ For the purposes of evaluating simulated network recovery, we define a gold stan
 TBA
 
 \section{Results}
+We tested the ability of fused regression to improve network inference and to learn conservation of gene function in both real and simulated data. We assessed performance using area under the precision recall curve on a leave-out set. We used cross-validation to define leave-out sets.  
 
-\subsection{Fusing similar network has the same effect as increasing the number of experimental conditions}
-When the sample size of gene expression increases, the performance
+\subsection{Fusing similar networks has the same effect as increasing the number of experimental conditions}
+We assessed whether using a fusion penalty on similar networks improved our ability to learn the underlying networks. We used sets of two networks with 20 TFs and 200 genes each, where each set had varying proportions of orthologous TFs and genes. As we increased network similarity, we saw greater improvements in performance from fused regression, and more accurate network recovery with higher fusion penalty weight. We show that these improvements are comparable to adding more data points when learning networks individually; by taking advantage of what is known about similarity between genes and pathways, we are able to move closer towards understanding the gene regulatory network without collecting more data. 
+
+\subsection{Fused regression improves performance on both the constrained and non-constrained parts of the network}
+We wanted to know if using fused regression on networks with only conserved subgraphs affected the recovery of the non constrained parts of the networks. We used sets of two networks with 20 TFs and 200 genes each, where each set had 0\%, 25\%, 50\%, or 75\% of the TFs and genes in orthology groups. We varied lamS and computed AUPR using cross-validation on the portion of the network that had fusion constraints, the portion without any orthology information, and on the whole network. On the fused networks, performance improved as the fusion penalty weight increased; interestingly, performance gains are seen even the portion of the network where no orthology information is known. By constraining part of an underdetermined system, we get gains in both parts. 
 
 \subsection{SCAD successfully identifies and unfuses 'neofunctionalized' genes}
+We recognize that orthology prediction is not necessarily a perfect proxy for functional conservation. Therefore, it is important that our method be able to learn what to "fuse" and what to "unfuse." We generated synthetic fused networks and introduce error in the fusion constraints by adding false positives and negatives to the orthology information given to the solver. We then examined those interactions which are truly analogous (interactions between correctly fused gene/TF pairs) and interactions which are labeled analogous but represent edges between gene/TF pairs where one or both nodes in the pair is incorrectly fused. Using our method, these latter interactions are successfully identified and the force pulling their weights towards each other is reduced; the former interactions are left alone. 
+
+\subsection{SCAD improves network inference}
+We wanted to determine whether SCAD is able to improve learning of GRNs. That is, beyond correctly identifying functional conservation and recovering the performance lost by fusing neofunctionalized genes, is our method able to produce more accurate networks than those learned without fusion? 
 
 \bibliographystyle{plain}
 \bibliography{paper}
