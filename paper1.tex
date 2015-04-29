@@ -123,6 +123,8 @@ Specifically, $\beta^S(t)$ is the network on iteration $t$.
 
 $\beta^S(t+1)$ is obtained by fitting the ridge-fused model with fusion constraints given by the above $\lambda_S$. This is nice because all our penalties can be treated as L2 and therefore retain the properties of ridge regression. 
 
+\subsection{Model selection}
+
 
 \subsection{Simulated data}
 Generation of simulated data begins with the production of random orthology mappings. We produce a one-to-one orthology by pairing random genes until a specified fraction have been assigned orthologs. This process is carried out separately for TFs and non-TF genes, so that TFs and non-TF genes are never assigned to be orthologous. We then produce a pair of random networks ($B^1$ and $B^2$) as follows. For each unfilled entry in $B^1$ or $B^2$, we enumerate the set $C$ consisting of the entry along with every entry in either matrix to which it is fused. With probability equal to the sparsity rate we assign every entry in $C$ to be 0, otherwise we sample a value $v \sim \mathcal{N}(0,1)$ and independently assign each entry in $C$ to $v + \mathcal{N}(0, \sigma_f^2)$. $\sigma_f$ is a parameter that controls the distribution of differences in the values of fused coefficients, so that the nonzero coefficients of $B^1, B^2$ are distributed as $\mathcal{N}(0, 1 + \sigma_f^2)$.
@@ -133,7 +135,7 @@ Following generation of simulated data, we may introduce error into the ortholog
 
 For the purposes of evaluating simulated network recovery, we define a gold standard network as the support of the beta matrices. Priors used in network inference are interactions from the gold standard. The list of priors can be be manipulated to include false positives and false negatives as with the generation of orthologs. 
 
-\subsection{Optimization and model selection}
+\subsection{Optimization}
 
 \subsection{Bacterial data}
 TBA
@@ -141,25 +143,79 @@ TBA
 \section{Results}
 We tested the ability of fused regression to improve network inference performance, as well as the ability of adaptive-fusion to learn the conservation of gene interactions. We measured network inference performance with the area under the precision recall curve (AUPR). 
 
+\begin{figure}
+\begin{center}
+  \includegraphics[scale=0.45]{l2fusionquick.png}
+  \caption{\label{fig:figure1} The x-axis represents lamS and the y-axis represents the proportion of nodes which are orthologous. As the networks increase in similarity, performance improves and benefits from a large fusion penalty weight}
+  \end{center}
+\end{figure}
 
+\begin{figure}
+\begin{center}
+  \includegraphics[scale=0.45]{increase_data2.png}
+  \caption{\label{fig:figure1} We fuse two networks, using lamS=0 and nonzero lamS, and hold the number of conditions in network 1 constant while varying the number of data points for network 2. We plot the performance of network 2.}
+  \end{center}
+\end{figure}
 
 \subsection{Network similarity and fusion performance}
 We assessed how varying the similarity of simulated networks affected network inference performance with fusion. The main factors governing similarity between our generated networks were the extent (and accuracy) of the orthology mapping, and the magnitude of variability between analogous interactions. We conducted a series of simulations to assess the effect of varying orthology coverage on networks in which analogous interactions varied little from one another. In order to determine the effect of the size of the orthology mapping on network inference performance, we simulated a series of 20 TFs by 200 genes networks at several values of percent orthology coverage. 
 
-As expected, increasing the weight of the fusion constraint $\lambda_S$ improved network recovery. Networks with higher orthology coverage saw a greater benefit from fusion, although the improvement was not limited to analogous interactions. One way of assessing the effect of fusion on network inference performance is to compute an ``exchange-rate'' between conditions in each network. Suppose you are interested in determining a regulatory network for species A, a model organism which is experimentally inconvenient. A related species, B, is easier to collect data for, but of less intrinsic interest. Our simulation results suggest that adding conditions from species B to a fused network inference problem has an effect on network A recovery that is similar to adding conditions from A at a reduced rate. 
+As expected, increasing the weight of the fusion constraint $\lambda_S$ improved network recovery (Figure 2). Networks with higher orthology coverage saw a greater benefit from fusion, although the improvement was not limited to analogous interactions. One way of assessing the effect of fusion on network inference performance is to compute an ``exchange-rate'' between conditions in each network. Suppose you are interested in determining a regulatory network for species A, a model organism which is experimentally inconvenient. A related species, B, is easier to collect data for, but of less intrinsic interest. Our simulation results suggest that adding conditions from species B to a fused network inference problem has an effect on network A recovery that is similar to adding conditions from A at a reduced rate (Figure 3). 
 
 We also assessed the effect of varying the standard deviation of the distribution of differences between analogous interactions on network performance. FILL IN. MENTION PRIOR INTERPRETATION
 
+\begin{figure}
+\begin{center}
+  \includegraphics[scale=0.45]{con_noncon.png}
+  \caption{\label{fig:figure4} We looked at four different sets of networks, where each set had different amounts of orthologous genes. We plotted the performance on the whole network, the constrained, and non-constrained portions of the network as we increased the fusion penalty weight.}
+  \end{center}
+\end{figure}
+
 \subsection{Fused regression improves performance on both the constrained and non-constrained parts of the network}
-We wanted to know if using fused regression on networks with only conserved subgraphs affected the recovery of the non constrained parts of the networks. We used sets of two networks with 20 TFs and 200 genes each, where each set had 0\%, 25\%, 50\%, or 75\% of the TFs and genes in orthology groups. We varied lamS and computed AUPR using cross-validation on the portion of the network that had fusion constraints, the portion without any orthology information, and on the whole network. On the fused networks, performance improved as the fusion penalty weight increased; interestingly, performance gains are seen even the portion of the network where no orthology information is known. By constraining part of an underdetermined system, we obtain gains in both parts. 
+We wanted to know if using fused regression on networks with only conserved subgraphs affected the recovery of the non constrained parts of the networks (Figure 4). We used sets of two networks with 20 TFs and 200 genes each, where each set had 0\%, 25\%, 50\%, or 75\% of the TFs and genes in orthology groups. We varied lamS and computed AUPR using cross-validation on the portion of the network that had fusion constraints, the portion without any orthology information, and on the whole network. On the fused networks, performance improved as the fusion penalty weight increased; interestingly, performance gains are seen even the portion of the network where no orthology information is known. By constraining part of an underdetermined system, we obtain gains in both parts. 
+
+\begin{figure}
+\begin{center}
+  \includegraphics[scale=0.45]{plot_betas_scad_l2.png}
+  \caption{\label{fig:figure1} This is what a figure looks like}
+  \end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+  \includegraphics[scale=0.45]{plot_betas_scad.png}
+  \caption{\label{fig:figure1} This is what a figure looks like}
+  \end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+  \includegraphics[scale=0.45]{scadf.png}
+  \caption{\label{fig:figure1} This is what a figure looks like}
+  \end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+  \includegraphics[scale=0.45]{scadt.png}
+  \caption{\label{fig:figure1} This is what a figure looks like}
+  \end{center}
+\end{figure}
 
 \subsection{SCAD successfully identifies and unfuses 'neofunctionalized' genes}
 We recognize that orthology prediction is not necessarily a perfect proxy for functional conservation. We implemented an adaptive fusion algorithm that attempts to optimize a nonconvex saturating penalty function on differences between fused interactions. Pairs of interactions which are very dissimilar even after fusion, which sit in the flat portion of this penalty function, are effectively ``unfused''. We can interpret this ``unfusing'' as evidence for neofunctionalization of one or more of the genes involved in this pair of analogous interactions. 
 
-We performanced a simulation to assess the ability of our adaptive fusion algorithm to learn which parts of two input networks are conserved when orthology information is faulty. We generated synthetic fused networks and introduce error in the fusion constraints by adding false positives and negatives to the orthology information given to the solver. Because we know which entries in the orthology mapping are ``fake'' (not reflected in the generation of the networks), we can label fusion constraints that involve one or more ``fake'' mappings as being ``fake''. We verified that adaptive-fusion unfused mostly ``fake'' interactions, while leaving truly analogous interactions fused.
+We performanced a simulation to assess the ability of our adaptive fusion algorithm to learn which parts of two input networks are conserved when orthology information is faulty (Figure 5-8). We generated synthetic fused networks and introduce error in the fusion constraints by adding false positives and negatives to the orthology information given to the solver. Because we know which entries in the orthology mapping are ``fake'' (not reflected in the generation of the networks), we can label fusion constraints that involve one or more ``fake'' mappings as being ``fake''. We verified that adaptive-fusion unfused mostly ``fake'' interactions, while leaving truly analogous interactions fused.
+
+\begin{figure}
+\begin{center}
+  \includegraphics[scale=0.45]{test_scad_opt_params3.png}
+  \caption{\label{fig:figure1} This is what a figure looks like}
+  \end{center}
+\end{figure}
 
 \subsection{SCAD improves network inference}
-We wanted to determine whether SCAD is able to improve learning of GRNs. That is, beyond correctly identifying functional conservation and recovering the performance lost by fusing neofunctionalized genes, is our method able to produce more accurate networks than those learned without fusion? 
+We wanted to determine whether SCAD is able to improve learning of GRNs. That is, beyond correctly identifying functional conservation and recovering the performance lost by fusing neofunctionalized genes, is our method able to produce more accurate networks than those learned without fusion? (Figure 9)
 
 \bibliographystyle{plain}
 \bibliography{paper}
