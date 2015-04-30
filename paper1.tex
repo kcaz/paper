@@ -135,6 +135,19 @@ Following generation of simulated data, we may introduce error into the ortholog
 
 For the purposes of evaluating simulated network recovery, we define a gold standard network as the support of the beta matrices. Priors used in network inference are interactions from the gold standard. The list of priors can be be manipulated to include false positives and false negatives as with the generation of orthologs. 
 
+\subsection{Beta scaling}
+[INSERT JUSTIFICATION]
+\\
+In previous work, betas were rescaled as to form a matrix of confidence scores $S$ as follows
+\begin{equation}
+S_{i,j} = \frac{\sigma^2_{\text{full model for }y_j}}{\sigma^2_{\text{full model for }y_j \text{ without predictor }i}}
+\end{equation}
+Computing residuals with respect to the data alone would disregard information gained through fusion. Instead, we used an approximation
+\begin{equation}
+S_{i,j} = \frac{\sigma^2_{\text{full model for }y_j}}{\sigma^2_{\text{full model for }y_j} + B_{i,j}^2 \times var(TF_j)}
+\end{equation}
+When the residual is uncorrelated with the prediction, then removing regressor $i$ with weight $B_{i,j}^2$ from the model of $j$ will increase the residual by $B_{i,j}^2$ times the variance of regressor $i$. In the case of regularized regression, the regressor and residual need not be uncorrelated, so the approximation will not hold exactly. This scaling is similar to rescaling according to variance explained relative to an augmented design matrix that includes fusion constraints. We use an approximation because it is simpler to compute. The intuition is that a large $B_{i,j}$ may be necessary because TF $i$ varies little across the available data, and these large weights are not suggestive of a true regulatory interaction.
+
 \subsection{Optimization}
 
 \subsection{Bacterial data}
@@ -216,6 +229,30 @@ We performed a simulation to assess the ability of our adaptive fusion algorithm
 
 \subsection{SCAD improves network inference}
 We wanted to determine whether SCAD is able to improve learning of GRNs. That is, beyond correctly identifying functional conservation and recovering the performance lost by fusing neofunctionalized genes, is our method able to produce more accurate networks than those learned without fusion? (Figure 9) We again generated synthetic fused networks and added false positive and negative orthologs, then used fused L2 and adaptive fusion approaches to solve the underlying network. 
+
+
+
+\begin{figure}
+\begin{center}
+  \includegraphics[scale=0.45]{waka7unnormed.png}
+  \caption{\label{fig:figure1} precision recall curves of constrained interactions for several values of lamS, computed across folds containing $\frac{1}{15}th$ of the available B. Subtilis data}
+  \end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+  \includegraphics[scale=0.45]{woko7.png}
+  \caption{\label{fig:figure1} normalized precision recall curves of constrained interactions for several values of lamS, computed across folds containing $\frac{1}{15}th$ of the available B. Subtilis data. Normalization involved dividing the precision each each recall level, for each curve, and for each cross-validation fold by the corresponding $\lambda_S=0$ precision.}
+  \end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+  \includegraphics[scale=0.45]{wat7.png}
+  \caption{\label{fig:figure1} As previous figure, but for all interactions.}
+  \end{center}
+\end{figure}
+
 
 \bibliographystyle{plain}
 \bibliography{paper}
