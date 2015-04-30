@@ -172,7 +172,7 @@ We also assessed the effect of varying the standard deviation of the distributio
 \end{figure}
 
 \subsection{Fused regression improves performance on both the constrained and non-constrained parts of the network}
-We wanted to know if using fused regression on networks with only conserved subgraphs affected the recovery of the non constrained parts of the networks (Figure 4). We used sets of two networks with 20 TFs and 200 genes each, where each set had 0\%, 25\%, 50\%, or 75\% of the TFs and genes in orthology groups. We varied lamS and computed AUPR using cross-validation on the portion of the network that had fusion constraints, the portion without any orthology information, and on the whole network. On the fused networks, performance improved as the fusion penalty weight increased; interestingly, performance gains are seen even the portion of the network where no orthology information is known. By constraining part of an underdetermined system, we obtain gains in both parts. 
+We wanted to know if using fused regression on networks with only conserved subgraphs affected the recovery of the non constrained parts of the networks (Figure 4). We used sets of two networks with 20 TFs and 200 genes each, where each set had 0\%, 25\%, 50\%, or 75\% of the TFs and genes in orthology groups. We varied lamS and computed AUPR using cross-validation on the portion of the network that had fusion constraints, the portion without any orthology information, and on the whole network. On the fused networks, performance improved as the fusion penalty weight increased; interestingly, performance gains were seen even the portion of the network where no orthology information is known. By constraining part of an underdetermined system, we obtained gains in both parts. 
 
 \begin{figure}
 \begin{center}
@@ -203,9 +203,9 @@ We wanted to know if using fused regression on networks with only conserved subg
 \end{figure}
 
 \subsection{SCAD successfully identifies and unfuses 'neofunctionalized' genes}
-We recognize that orthology prediction is not necessarily a perfect proxy for functional conservation. We implemented an adaptive fusion algorithm that attempts to optimize a nonconvex saturating penalty function on differences between fused interactions. Pairs of interactions which are very dissimilar even after fusion, which sit in the flat portion of this penalty function, are effectively ``unfused''. We can interpret this ``unfusing'' as evidence for neofunctionalization of one or more of the genes involved in this pair of analogous interactions. 
+We recognize that orthology prediction is not necessarily a perfect proxy for functional conservation. We implemented an adaptive fusion algorithm that attempts to optimize a nonconvex saturating penalty function on differences between fused interactions. Pairs of interactions which are very dissimilar even after fusion, which sit in the flat portion of this penalty function, are effectively ``unfused''. We can interpret this ``unfusing'' as evidence for neofunctionalization of one or more of the genes involved in this pair of interactions. 
 
-We performanced a simulation to assess the ability of our adaptive fusion algorithm to learn which parts of two input networks are conserved when orthology information is faulty (Figure 5-8). We generated synthetic fused networks and introduce error in the fusion constraints by adding false positives and negatives to the orthology information given to the solver. Because we know which entries in the orthology mapping are ``fake'' (not reflected in the generation of the networks), we can label fusion constraints that involve one or more ``fake'' mappings as being ``fake''. We verified that adaptive-fusion unfused mostly ``fake'' interactions, while leaving truly analogous interactions fused.
+We performed a simulation to assess the ability of our adaptive fusion algorithm to learn which parts of two input networks are conserved when orthology information is faulty, to mimic the effects of predicting orthologs which are not functionally similar (Figure 5-8). We generated synthetic fused networks and introduced error in the fusion constraints by adding false positives and negatives to the orthology information given to the solver. Because we know which entries in the orthology mapping are ``fake'' (not reflected in the generation of the networks), we can label fusion constraints that involve one or more ``fake'' mappings as being ``fake''. We verified that adaptive-fusion unfused mostly ``fake'' interactions, while leaving truly analogous interactions fused.
 
 \begin{figure}
 \begin{center}
@@ -215,7 +215,7 @@ We performanced a simulation to assess the ability of our adaptive fusion algori
 \end{figure}
 
 \subsection{SCAD improves network inference}
-We wanted to determine whether SCAD is able to improve learning of GRNs. That is, beyond correctly identifying functional conservation and recovering the performance lost by fusing neofunctionalized genes, is our method able to produce more accurate networks than those learned without fusion? (Figure 9)
+We wanted to determine whether SCAD is able to improve learning of GRNs. That is, beyond correctly identifying functional conservation and recovering the performance lost by fusing neofunctionalized genes, is our method able to produce more accurate networks than those learned without fusion? (Figure 9) We again generated synthetic fused networks and added false positive and negative orthologs, then used fused L2 and adaptive fusion approaches to solve the underlying network. 
 
 \bibliographystyle{plain}
 \bibliography{paper}
