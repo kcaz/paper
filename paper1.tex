@@ -15,11 +15,12 @@
 \begin{document}
 
 \title{GRN inference in multiple species}
-\author{Kari Y. Lam, Zachary M. Westrick, Frank Underwood}
+\author{Kari Y. Lam, Zachary M. Westrick, Christian Mueller, Lionel Christiaen, Rich Bonneau}
 \maketitle
 
 \begin{abstract}
-sup sup sup
+Methods for learning gene regulatory networks are essential to our understanding of cell behavior and response to external stimuli. We are interested in improving the accuracy of our networks in order to do meaningful comparisons between networks. We present two approaches using fused regression, where we exploit available evolutionary information to constrain an undetermined system, and show that both result in more accurate networks. We show that fused L2 is most useful in the case where the networks are very similar (eg different cell types or closely related species), but where data is limited. We can leverage our knowledge about the relationship between genes to promote our understanding of the respective networks. When data is more readily available, adaptive fusion is useful for identifying conservation between networks. 
+
 \end{abstract}
 
 \section{Introduction}
@@ -51,7 +52,7 @@ Related species should be governed by similar but not necessarily identical gene
 \argmin_{(\beta^A, \beta^B)} \displaystyle\sum_{S \in (A, B)} \vert \vert X^S\beta^S - Y^S \vert \vert ^2 + \lambda_R \vert \vert \beta^S \vert \vert ^2 + \displaystyle \sum_{\beta^{S_1}_{g,k} \approx \beta^{S_2}_{h,l}} \lambda_S(\beta^{S_1}_{g,k} - \beta^{S_2}_{h,l})^2
 \end{equation}
 
-Where the second sum is over pairs of interactions with fusion constraints. Note that each term in the quantity being minimized is an L2 norm of a linear combination of gene expressions, so the entire problem can be solved through linear regression with a suitable design matrix [DETAILS SHOULD GO SOMEWHERE ELSE, OR NOWHERE]. The regulators of a pair of genes can be solved independently as long as the pair is not linked by fusion constraints, or a chain of fusion constraints; thus the problem of cross-species GRN inference decomposes into a large number of manageable regression problems as long as the orthology mappings are sparse.
+Where the second sum is over pairs of interactions with fusion constraints. Note that each term in the quantity being minimized is an L2 norm of a linear combination of gene expressions, so the entire problem can be solved through linear regression with a suitable design matrix. The regulators of a pair of genes can be solved independently as long as the pair is not linked by fusion constraints, or a chain of fusion constraints; thus the problem of cross-species GRN inference decomposes into a large number of manageable regression problems as long as the orthology mappings are sparse.
 
 [DIGRESSION?]
 
@@ -127,7 +128,6 @@ Following generation of simulated data, we may introduce error into the ortholog
 For the purposes of evaluating simulated network recovery, we define a gold standard network as the support of the beta matrices. Priors used in network inference are interactions from the gold standard. The list of priors can be be manipulated to include false positives and false negatives as with the generation of orthologs. 
 
 \subsection{Beta scaling}
-[INSERT JUSTIFICATION]
 \\
 In previous work, betas were rescaled as to form a matrix of confidence scores $S$ as follows
 \begin{equation}
