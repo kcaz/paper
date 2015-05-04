@@ -31,7 +31,7 @@ We begin with an existing framework for estimating the interaction weights in a 
 \begin{equation}
 \frac{\mathrm d}{\mathrm d t} x_i = -\alpha_{i}x_{i} + \sum \beta_{i,j}x_{j}
 \end{equation}
-We are interested in learning $\beta$, the matrix defining the influence of each TF on each gene. We fix the decay rate $\alpha$ for all genes, and set it assuming a time-constant of 10 minutes [CITATIONS], as in [CITATIONS]. Let $x_i(t)$ be the expression of gene $i$ at time $t$. Given time-series data on the expression of gene $i$ at timepoints $t_k$ and $t_{k+1}$, we can approximate the rate of change of $x_i$ as $x_i'(t_k)=\frac{x_i(t_{k+1})-x_i(t_k)}{t_{k+1}-t_k}$. This gives us, for each gene $i$ and time $t_{k}$ an equation
+We are interested in learning $\beta$, the matrix defining the influence of each TF on each gene. We fix the decay rate $\alpha$ for all genes, and set it assuming a time-constant of 10 minutes [CITATIONS], as in [CITATIONS]. Let $x_i(t)$ be the expression of gene $i$ at time $t$. Given time-series data on the expression of gene $i$ at timepoints $t_k$ and $t_{k+1}$, we can approximate the rate of change of $x_i$ as $x_i'(t_k)=\frac{x_i(t_{k+1})-x_i(t_k)}{t_{k+1}-t_k}$. We can treat steady-state data as having a derivative of zero. This gives us, for each gene $i$ and time $t_{k}$ an equation
 
 \begin{equation}
 \frac{x_i(t_{k+1})-x_i(t_k)}{t_{k+1}-t_k} + \alpha_{i}x_{i}(t_k)= \sum \beta_{i,j}x_{j}(t_k)
@@ -128,7 +128,6 @@ Following generation of simulated data, we may introduce error into the ortholog
 For the purposes of evaluating simulated network recovery, we define a gold standard network as the support of the beta matrices. Priors used in network inference are interactions from the gold standard. The list of priors can be be manipulated to include false positives and false negatives as with the generation of orthologs. 
 
 \subsection{Beta scaling}
-\\
 In previous work, betas were rescaled as to form a matrix of confidence scores $S$ as follows
 \begin{equation}
 S_{i,j} = \frac{\sigma^2_{\text{full model for }y_j}}{\sigma^2_{\text{full model for }y_j \text{ without predictor }i}}
@@ -140,9 +139,7 @@ S_{i,j} = \frac{\sigma^2_{\text{full model for }y_j}}{\sigma^2_{\text{full model
 When the residual is uncorrelated with the prediction, then removing regressor $i$ with weight $B_{i,j}^2$ from the model of $j$ will increase the residual by $B_{i,j}^2$ times the variance of regressor $i$. In the case of regularized regression, the regressor and residual need not be uncorrelated, so the approximation will not hold exactly. This scaling is similar to rescaling according to variance explained relative to an augmented design matrix that includes fusion constraints. We use an approximation because it is simpler to compute. The intuition is that a large $B_{i,j}$ may be necessary because TF $i$ varies little across the available data, and these large weights are not suggestive of a true regulatory interaction.
 
 \subsection{Optimization}
-
-\subsection{Bacterial data}
-TBA
+We use cross-validation to select optimal regularization parameters $\lambda_R$ and $\lambda_S$. In order to determine the relevant scale of the fusion weight $\lambda_S$, we can compute the correlation between pairs of coefficients linked by fusion constraints. The maximal value of $\lambda_S$ should be just large enough so that this correlation is near $1$. More details on this later.
 
 \section{Results}
 We tested the ability of fused regression to improve network inference performance, as well as the ability of adaptive-fusion to learn the conservation of gene interactions. We measured network inference performance with the area under the precision recall curve (AUPR). 
@@ -221,6 +218,31 @@ We performed a simulation to assess the ability of our adaptive fusion algorithm
 \subsection{Adaptive fusion improves network inference}
 We wanted to determine whether adaptive fusion is able to improve learning of GRNs. That is, beyond correctly identifying functional conservation and recovering the performance lost by fusing neofunctionalized genes, is our method able to produce more accurate networks than those learned without fusion? (Figure 9) We again generated synthetic fused networks and added false positive and negative orthologs, then used fused L2 and adaptive fusion approaches to solve the underlying network. Fused L2 incorporated flawed orthology information, resulting in degradation of performance as we increased orthology error. Performance increased using adaptive fusion, pointing to its utility in network inference in addition to identifying neofunctionalization.
 
+
+\section{Bacterial data}
+We used gene-expression data from B. Subtilis and B. Anthracis in order to assess performance gains of fused regression on real data. Our B Subtilis data set consists of 266 time-series and steady-state observations of 4891 genes during development. Our B. Anthracis dataset consists of 72 time-series and steady-state observations of 5536 genes comprising data from developmental and iron-starvation conditions. There were 247 known Transcription Factors (TFs) in the B. Subtilis dataset, and 248 TFs in the B. Anthracis dataset. 
+
+We obtained 1870 one-to-one orthologs from Inparanoid, which produced 177650 fusion-constraints between gene interactions within the two species. Although this number seems very large, it represents only $14.7\%$ of the regulatory interaction matrix in B. Subtilis and $12.9\%$ in B. Anthracis. The use of such dissimilar species is a test of whether fusion can improve network-inference even when the overlap in interactions is very small.
+
+In order to evaluate network inference performance, and for use as priors, we used a gold standard of 2896 known B. Subtilis interactions with corresponding activation and repression sign. Of these 2896 priors, 968 had corresponding interactions in B. Anthracis. Based on our simulation results, we can expect the greatest gains in network-inference performance from fusion when the species of interest has a small number of available conditions, but data is abundant in a related species. However, in order to evaluate performance objectively a gold-standard of known interactions is necessary. As a result, we can only evaluate network recovery for B. Subtilis, and B. Subtilis also has the majority of our conditions. In order to simulate the data-poor regime, we subsampled our B. Subtilis data. Specifically, we divided our B. Subtilis data into $k$ folds, and then for each fold fit a network to the B. Subtilis data from that fold alone fused to the entire 72 B. Anthracis conditions. We can then compute performance metrics (ie AUPR) for each fold, and use their variability across folds to test for significance of any improvements relating to the use of fusion constraints. 
+
+\subsection{Bacterial performance}
+\subsubsection{Performance with priors}
+We want to show that performance increases with introduction of priors - this is easy/circular but probably important.
+
+\subsubsection{Precision recall}
+Introducing fusion constraints leads to a small but consistent improvement in AUPR.
+
+
+\begin{center}
+  \begin{tabular}{ l | l | l }
+    \hline
+    $\lambda_S$ & $k$ & $AUPR$ \\ \hline
+    0 & 15 & 0.04 \\
+    0 & 15 & 0.06 \\
+    \hline
+  \end{tabular}
+\end{center}
 
 
 \begin{figure}
