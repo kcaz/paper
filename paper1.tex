@@ -147,14 +147,14 @@ We tested the ability of fused regression to improve network inference performan
 \begin{figure}
 \begin{center}
   \includegraphics[scale=0.45]{l2fusionquick.png}
-  \caption{\label{fig:figure1} The x-axis represents lamS and the y-axis represents the proportion of nodes which are orthologous. As the networks increase in similarity, performance improves and benefits from a large fusion penalty weight}
+  \caption{\label{fig:figure1} We generate a series of networks with 20 TFs by 200 genes, with 75\% sparsity, 0.1 measurement noise, and 0.1 fusion noise. We hold lamP and lamR constant at 1.0 and 2.0 respectively. The x-axis represents lamS and the y-axis represents the proportion of nodes which are orthologous. As the networks increase in similarity, performance improves and benefits from a large fusion penalty weight}
   \end{center}
 \end{figure}
 
 \begin{figure}
 \begin{center}
   \includegraphics[scale=0.45]{increase_data2.png}
-  \caption{\label{fig:figure1} We fuse two networks, using lamS=0 and nonzero lamS, and hold the number of conditions in network 1 constant while varying the number of data points for network 2. We plot the performance of network 2.}
+  \caption{\label{fig:figure1} We fuse two networks, both with 25 TFs by 50 genes, using lamS=0 and nonzero lamS, and hold the number of conditions in network 1 constant while varying the number of data points for network 2. We plot the performance of network 2.}
   \end{center}
 \end{figure}
 
@@ -168,7 +168,7 @@ We also assessed the effect of varying the standard deviation of the distributio
 \begin{figure}
 \begin{center}
   \includegraphics[scale=0.45]{con_noncon.png}
-  \caption{\label{fig:figure4} We looked at four different sets of networks, where each set had different amounts of orthologous genes. We plotted the performance on the whole network, the constrained, and non-constrained portions of the network as we increased the fusion penalty weight.}
+  \caption{\label{fig:figure4} We looked at four different sets of networks, each with 20 TFs by 200 genes, where each set had different amounts of orthologous genes. We plotted the performance on the whole network, the constrained, and non-constrained portions of the network as we increased the fusion penalty weight.}
   \end{center}
 \end{figure}
 
@@ -178,28 +178,28 @@ We wanted to know if using fused regression on networks with only conserved subg
 \begin{figure}
 \begin{center}
   \includegraphics[scale=0.45]{plot_betas_scad_l2.png}
-  \caption{\label{fig:figure1} This is what a figure looks like}
+  \caption{\label{fig:figure1} We used two networks, each with 20 TFs by 200 genes, 50\% of which are orthologous. We include as many false positive orthologs as true positives, and color the points solved using true orthology information green and the points solved using false orthology information red. We randomly select an interaction from each network, and color this point blue. We solve the networks using fused L2.}
   \end{center}
 \end{figure}
 
 \begin{figure}
 \begin{center}
   \includegraphics[scale=0.45]{plot_betas_scad.png}
-  \caption{\label{fig:figure1} This is what a figure looks like}
+  \caption{\label{fig:figure1} We used two networks, each with 20 TFs by 200 genes, 50\% of which are orthologous. We include as many false positive orthologs as true positives, and color the points solved using true orthology information green and the points solved using false orthology information red. We randomly select an interaction from each network, and color this point blue. We solve the networks using adaptive fusion.}
   \end{center}
 \end{figure}
 
 \begin{figure}
 \begin{center}
   \includegraphics[scale=0.45]{scadf.png}
-  \caption{\label{fig:figure1} This is what a figure looks like}
+  \caption{\label{fig:figure1} Here we use two 10 TF by 200 gene networks, 50\% of which are orthologous. We include as many false positive orthologs as we have true positives, and apply adaptive fusion to the beta values with lamS=3. We plot the distribution of lamS learned for false orthologs.}
   \end{center}
 \end{figure}
 
 \begin{figure}
 \begin{center}
   \includegraphics[scale=0.45]{scadt.png}
-  \caption{\label{fig:figure1} This is what a figure looks like}
+  \caption{\label{fig:figure1} Here we use two 10 TF by 200 gene networks, 50\% of which are orthologous. We include as many false positive orthologs as we have true positives, and apply adaptive fusion to the beta values with lamS=3. We plot the distribution of lamS learned for true orthologs.}
   \end{center}
 \end{figure}
 
@@ -211,7 +211,7 @@ We performed a simulation to assess the ability of our adaptive fusion algorithm
 \begin{figure}
 \begin{center}
   \includegraphics[scale=0.45]{test_scad_opt_params3.png}
-  \caption{\label{fig:figure1} This is what a figure looks like}
+  \caption{\label{fig:figure1} We use three sets of 20 TF by 200 gene networks, 50\% of which are orthologs, and solve with orthology information containing 0:1, 0.5:1, and 1:1 false positive to true positive. We plot AUPR under fused L2 and adaptive fusion.}
   \end{center}
 \end{figure}
 
