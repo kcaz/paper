@@ -167,7 +167,6 @@ and introduce a fusion constraint $\lambda = \frac{p'(\theta(t))}{2\theta(t)} $
 
 $\beta^S(t+1)$ is obtained by fitting the ridge-fused model with fusion constraints given by the above $\lambda_S$. This is nice because all our penalties can be treated as L2 and therefore retain the properties of ridge regression. 
 
-\subsection{Model selection}
 
 
 \subsection{Simulated data}
@@ -199,7 +198,7 @@ We tested the ability of fused regression to improve network inference performan
 \begin{figure}
 \begin{center}
   \includegraphics[scale=0.45]{l2fusionquick.png}
-  \caption{\label{fig:figure1} We generate a series of networks with 20 TFs by 200 genes, with 75\% sparsity, 0.1 measurement noise, and 0.1 fusion noise. We hold lamP and lamR constant at 1.0 and 2.0 respectively. The x-axis represents lamS and the y-axis represents the proportion of nodes which are orthologous. As the networks increase in similarity, performance improves and benefits from a large fusion penalty weight}
+  \caption{\label{fig:figure1} We generate a series of networks with 20 TFs by 200 genes, with 75\% sparsity, 0.1 measurement noise, and 0.1 fusion noise. We hold lamP and lamR constant at 1.0 and 2.0 respectively. The x-axis represents lamS and the y-axis represents the proportion of nodes which are orthologous. As the networks increase in similarity, performance improves and benefits from a large fusion penalty weight. NOTE: This figure shows AUPR. $R^2$ behaves as expected with respect to $\lambda_S$ (networks with large differences between fused coefficients have best $R^2$ at intermediate $\lambda_S$). This doesn't really seem to be the case with AUPR. Maybe these early figures should be replaced with $R^2$}
   \end{center}
 \end{figure}
 
@@ -283,15 +282,15 @@ In order to evaluate network inference performance, and for use as priors, we us
 We want to show that performance increases with introduction of priors - this is easy/circular but probably important.
 
 \subsubsection{Precision recall}
-Introducing fusion constraints leads to a small but consistent improvement in AUPR.
+Introducing fusion constraints leads to a small but consistent improvement in AUPR. Inspection of precision recall curves shows that this improvement is a result of increased precision at low values of recall. Essentially, precision increases for the high confidence part of the network but not for the low confidence part of the network. As a result, the improvements in performance may be more useful than would be suggested by AUPR alone. Interactions suggested by genome wide analysis need to be experimentally verified, and the ranking of interactions produced by a network inference algorithms is a useful guide to what order these experiments should be carried out in. The high confidence part of the network represents interactions that are likely candidates for experimental validation, so improvement in recovery of these interactions is particularly useful in guiding research. 
 
 
 \begin{center}
   \begin{tabular}{ l | l | l }
     \hline
-    $\lambda_S$ & $k$ & $AUPR$ \\ \hline
-    0 & 15 & 0.04 \\
-    0 & 15 & 0.06 \\
+    $\lambda_S$ & $\%$ data & $AUPR constrained$ \\ \hline
+    0 & 0.066 & 0.0390 \\
+    5 & 0.066 & 0.0415 \\
     \hline
   \end{tabular}
 \end{center}
