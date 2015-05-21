@@ -19,7 +19,7 @@
 \maketitle
 
 \begin{abstract}
-Learning gene regulatory networks is essential to our understanding of cell behavior and response to external stimuli. Methods for network inference have been developed and used for a wide variety of species; however, these approaches consider the problem as independent in each species even though there is known to be conservation of gene regulation even in distantly related species. We introduce a method that allows data to be pooled across species in a principled way based on gene orthology and demonstrate that it improves network inference even when the orthology is incomplete. We further refine this method with an algorithm that attempts to learn the true conserved subnetwork from a larger set of potentially conserved interactions. 
+Learning gene regulatory networks is essential to our understanding of cell behavior and response to external stimuli. Methods for network inference from large datasets have been developed and used for a wide variety of species; however, these approaches consider the problem as independent in each species even though there is known to be conservation of gene regulation even in distantly related species. We introduce a method that allows data to be pooled across species in a principled way based on gene orthology and demonstrate that it improves network inference even when the orthology is incomplete. We further refine this method with an algorithm that attempts to learn the true conserved subnetwork from a larger set of potentially conserved interactions. 
 \end{abstract}
 
 \section{Introduction}
@@ -40,7 +40,7 @@ We present two methods to multi-species network inference using fused regression
 
 \section{Methods}
 \subsection{Gene regulatory network}
-We represent gene regulatory networks as a matrix of weights, where rows index transcription factors and columns index genes. The weight in a given position represents the regulatory network on that TF on that gene; positive weights represent activation, negative weights represent repression, and 0 weights represent the absence of an interaction. We begin with an existing framework for estimating the interaction weights in a gene regulatory network (GRN). In the Inferelator algorithm, linear differential equations are used to model changes in gene expression. The rate at which the observed mRNA expression of gene $i$, $x_i$, changes is governed by degradation of existing transcripts with rate $\alpha$ plus a linear combination of transcription factor (TF) expressions. 
+We represent gene regulatory networks as a matrix of weights, where rows index transcription factors and columns index genes. The weight in a given position represents the regulatory weight of that TF on that gene; positive weights represent activation, negative weights represent repression, and 0 weights represent the absence of an interaction. We begin with an existing framework for estimating the interaction weights in a gene regulatory network (GRN). In the Inferelator algorithm, linear differential equations are used to model changes in gene expression. The rate at which the observed mRNA expression of gene $i$, $x_i$, changes is governed by degradation of existing transcripts with rate $\alpha$ plus a linear combination of transcription factor (TF) expressions. 
 \begin{equation}
 \frac{\mathrm d}{\mathrm d t} x_i = -\alpha_{i}x_{i} + \sum \beta_{i,j}x_{j}
 \end{equation}
@@ -51,7 +51,7 @@ We are interested in learning $\beta$, the matrix defining the influence of each
 \end{equation}
 \noindent We can summarize these equations in matrix form as
 \begin{equation}
-Y = \beta X
+Y = X \beta 
 \end{equation}
 \noindent We approach the learning of the $\beta$ matrix using regression. Because there are typically far fewer conditions than possible regressors (TFs), we introduce a ridge regularization constraint with weight $\lambda_R$ and solve
 \begin{equation}
@@ -70,7 +70,7 @@ Where the second sum is over pairs of interactions with fusion constraints. Note
 
 When there is a one-to-one orthology between the species being considered (ie different cell-lines of the same organism), the choice of $\lambda_S$ allows one to interpolate between fitting each network independently ($\lambda_S=0$) and pooling data together as if it came from one source ($\lambda_S=\inf$). Part of the appeal of the approach, however, is that it allows pooling of data even when there is incomplete orthology. By introducing constraints on the similarity of individual interactions, rather than on the networks as a whole [CITE IBM?], we can pool some information across species even when an arbitrarily small fraction of genes have orthologs. This is particularly useful when dealing with a large number of species; pairwise orthologies may be nearly complete even when the number of genes present in every organism is small. 
 
-\subsection{Solving}
+\subsection{Solving using augmented matrices}
 The problem of solving a multi-valued regression problem can be converted into the problem of solving a single valued regression problem by vectorization.
 Specifically, if $Y \in R^{N \times M}$ then we form $A =$ diagonally concatenate $X$, $M$ times (with the remaining entries 0),
 $y =$ vertically concatenate the columns of $Y$
@@ -191,7 +191,7 @@ S_{i,j} = \frac{\sigma^2_{\text{full model for }y_j}}{\sigma^2_{\text{full model
 When the residual is uncorrelated with the prediction, then removing regressor $i$ with weight $B_{i,j}^2$ from the model of $j$ will increase the residual by $B_{i,j}^2$ times the variance of regressor $i$. In the case of regularized regression, the regressor and residual need not be uncorrelated, so the approximation will not hold exactly. This scaling is similar to rescaling according to variance explained relative to an augmented design matrix that includes fusion constraints. We use an approximation because it is simpler to compute. The intuition is that a large $B_{i,j}$ may be necessary because TF $i$ varies little across the available data, and these large weights are not suggestive of a true regulatory interaction.
 
 \subsection{Optimization}
-We use cross-validation to select optimal regularization parameters $\lambda_R$ and $\lambda_S$. In order to determine the relevant scale of the fusion weight $\lambda_S$, we can compute the correlation between pairs of coefficients linked by fusion constraints. The maximal value of $\lambda_S$ should be just large enough so that this correlation is near $1$. More details on this later.
+We use cross-validation to select optimal regularization parameters $\lambda_R$ and $\lambda_S$. In order to determine the relevant scale of the fusion weight $\lambda_S$, we can compute the correlation between pairs of coefficients linked by fusion constraints. The maximal value of $\lambda_S$ should be just large enough so that this correlation is near $1$. 
 
 \section{Results}
 We tested the ability of fused regression to improve network inference performance, as well as the ability of adaptive-fusion to learn the conservation of gene interactions. We measured network inference performance with the area under the precision recall curve (AUPR). 
@@ -199,7 +199,7 @@ We tested the ability of fused regression to improve network inference performan
 \begin{figure}
 \begin{center}
   \includegraphics[scale=0.45]{l2fusionquick.png}
-  \caption{\label{fig:figure1} We generate a series of networks with 20 TFs by 200 genes, with 75\% sparsity, 0.1 measurement noise, and 0.1 fusion noise. We hold lamP and lamR constant at 1.0 and 2.0 respectively. The x-axis represents lamS and the y-axis represents the proportion of nodes which are orthologous. As the networks increase in similarity, performance improves and benefits from a large fusion penalty weight}
+  \caption{\label{fig:figure1} We generate a series of networks with 20 TFs by 200 genes, with 75\% sparsity, 0.1 measurement noise, and 0.1 fusion noise. We hold lamP and lamR constant at 1.0 and 2.0 respectively. The x-axis represents lamS and the y-axis represents the proportion of nodes which are orthologous. As the networks increase in similarity, performance improves and benefits from a large fusion penalty weight. NOTE: This figure shows AUPR. $R^2$ behaves as expected with respect to $\lambda_S$ (networks with large differences between fused coefficients have best $R^2$ at intermediate $\lambda_S$). This doesn't really seem to be the case with AUPR. Maybe these early figures should be replaced with $R^2$}
   \end{center}
 \end{figure}
 
@@ -286,15 +286,15 @@ We want to show that performance increases with introduction of priors - this is
 We want to show that we can successfully identify neofunctionalization; since we do not have a gold standard for this we will introduce false positive orthologs into the orthology information and evaluate the ability of our method to identify true from false orthologs. 
 
 \subsubsection{Precision recall}
-Introducing fusion constraints leads to a small but consistent improvement in AUPR.
+Introducing fusion constraints leads to a small but consistent improvement in AUPR. Inspection of precision recall curves shows that this improvement is a result of increased precision at low values of recall. Essentially, precision increases for the high confidence part of the network but not for the low confidence part of the network. As a result, the improvements in performance may be more useful than would be suggested by AUPR alone. Interactions suggested by genome wide analysis need to be experimentally verified, and the ranking of interactions produced by a network inference algorithms is a useful guide to what order these experiments should be carried out in. The high confidence part of the network represents interactions that are likely candidates for experimental validation, so improvement in recovery of these interactions is particularly useful in guiding research. 
 
 
 \begin{center}
   \begin{tabular}{ l | l | l }
     \hline
-    $\lambda_S$ & $k$ & $AUPR$ \\ \hline
-    0 & 15 & 0.04 \\
-    0 & 15 & 0.06 \\
+    $\lambda_S$ & $\%$ data & $AUPR constrained$ \\ \hline
+    0 & 0.066 & 0.0390 \\
+    5 & 0.066 & 0.0415 \\
     \hline
   \end{tabular}
 \end{center}
