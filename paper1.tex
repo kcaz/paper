@@ -1,5 +1,6 @@
 \documentclass[11pt]{article}
 \usepackage{graphicx}
+\usepackage[pdf]{pstricks}
 %\usepackage{mathtools}
 \usepackage{amssymb,amsmath}
 \usepackage{textcomp}
@@ -88,7 +89,7 @@ The weight matrix $W$ has a block diagonal structure:
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=.5,trim=0mm 0mm 0mm 0mm,clip]{direct_solve.eps}
+    \includegraphics[scale=.5,trim=0mm 0mm 0mm 0mm,clip]{direct_solve.png}
 \end{figure}
 
 The fused multi-source regression problem can solved by constructing a multi-source design matrix $X$ and data matrix $Y$, and then vectorizing.
