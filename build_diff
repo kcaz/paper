@@ -1,0 +1,8 @@
+#!/bin/bash
+rm diff.aux
+rm diff.bbl
+pdflatex diff
+bibtex diff
+pdflatex diff
+pdflatex diff
+#dvipdf adapt_draft11.dvi adapt_draft11.pdf
