@@ -47,10 +47,61 @@ We test the ability of fused L2 and adaptive fusion to improve network recovery 
 
 
 \section{Methods}
-Although our approach is generalizable to a wide variety of multi-source network inference problems, we begin with the concrete example of network inference in two related species. Our approach to multi-species network inference is based on the hypothesis that gene regulation in related species is governed by similar but not necessarily identical gene regulatory networks, due to conservation of function through evolution. We represent conservation of network function by introducing constraints into the objective function for network inference that penalize differences between the weights of regulatory interactions believed to be a priori similar. These constraints favor the generation of similar networks for related species, and in the generally under-constrained regime of network inference can improve the accuracy of network recovery. We then go on to introduce a method to test the assumption of conserved network structure, and to relax the associated constraints on pairs of interactions for which data does not support conservation.
 
-\subsection{\textit{B. subtilis} and \textit{B. anthracis} data and orthology}
-We used a dataset collected for PY79, a derivative of strain 168, available on GEO with accession number GSE67023, and a dataset using BSB1, another derivative of strain 168, available at GEO with accession number GSE27219. We used two datasets for \texti{B. anthracis}, transcription profiling during iron starvation (E-MEXP-2272 on ArrayExpress), and time series over the life cycle (E-MEXP-788 on ArayExpress). We ran Inparanoid to obtain orthology mapping for \textit{B. subtilis} and \textit{B. anthracis} \cite{ostlund_inparanoid_2010}
+\subsection{Statistical approach and background}
+We consider prediction and coefficient estimation problems with $N$ observations of $M$ dependent variables $y_{1,1}, y_{2,1}, ...y_{N,1}, y_{N,2},..., y_{N, M}$ and features $x_{i,j}$, $i=1,2,...,N, j=1,2,...,p$. We begin with a standard linear regression model:
+
+\begin{equation}
+y_{i,k} = \displaystyle\sum_{j}x_{ij}\beta_{j,k} + \epsilon_i
+\end{equation}
+
+with errors $\epsilon_i$ having mean 0 and constant variance, and predictors $x_{ij}$ having mean 0 and unit variance. We are interested in the case where $p >> N$. Many methods have been proposed to deal with the underconstrained case, and have been applied to genomic data \cite{waldron_optimized_2011, li_network-constrained_2008}. For example, ridge regression penalizes the L2 norm of the coefficients $\beta_{i,j}$ in order to avoid overfitting \cite{hoerl_ridge_1970}, and can be thought of as a mean-zero Gaussian prior on the coefficients. 
+
+More complicated penalties have been developed to represent certain expected or desireable structure in a regression model's coefficients. For example, Land and Friedman \cite{citeulike3780356} proposed a fusion penalty:
+
+\begin{equation}
+\text{argmin}_{\beta} \displaystyle\sum_{ij} || y_i - x_{ij}\beta{j} ||^2 + \sum\limits_{j=2}^p ||\beta_j - \beta_{j-1}]|^\alpha
+
+\end{equation}
+
+Which encourages smoothness of the estimated parameter vector. 
+
+%This penalty utilizes correlation information from data by penalizing pairwise differences of coefficients \cite{Daye2009,Price2014}. 
+Existing approaches have used similar fusion penalties to combine statistical strength across multiple regression tasks by introducing regularization functions reflecting prior knowledge on output structure representing how outputs are related \cite{kim_tree-guided_2012,Land1997,Chen2010,Petry2011,Hebiri2011}. Price et al. and Bilgrau et al. use a fused ridge estimator for jointly estimating multiple inverse covariance matrices \cite{Price2014a,Bilgrau2015}; we take a similar approach, adding an L2 penalty on the differences between coefficients to the existing ridge penalty in order to incorporate prior knowledge about relationships between input-output pairs:
+
+
+\begin{equation}
+
+\argmin_{\beta} \displaystyle\sum \vert \vert X\beta - Y \vert \vert ^2 + \lambda_R \vert \vert \beta \vert \vert ^2 +  \lambda_S  \displaystyle \sum_{\beta_{g,k} \approx \beta_{h,l}} || \beta_{g,k} - \beta_{h,l} ||^2
+
+\end{equation}
+
+where $X$, $Y$, and $\beta$ are matrices, and $\beta_{g,k} \approx \beta_{h,l}$ denotes fusion between arbitrary entries of $\beta$. Note that, like ridge regression, this penalty can be thought of as representing a Gaussian prior on the coefficients $\beta$. In the case where $\beta$ is a column vector, introducing this penalty is equivalent to assuming that $\beta$ is sampled from a multivariate Gaussian with inverse covariance matrix $\Sigma^{-1} = \lambda_R + \displaystyle \sum_{\beta_g \approx \beta_g} \lambda_S (1_{g,g} + 1_{h,h} - 1_{g,h} - 1_{h,g})$, where $I$ denotes the identity matrix and $1_{i,j}$ a matrix of zeros with 1 in its $i, jth$ entry. In the case of a two-coefficient model with fusion between the coefficients, for example, fused L2 is equivalent to assuming a prior with variance $(\lambda_R + \lambda_S)/(\lambda_R^2+2\lambda_R\lambda_S)$ and covariance $\lambda_S/(\lambda_R^2+2\lambda_R\lambda_S)$.
+
+
+In many cases, however, there is some uncertainty about the relationships that should be enforced. Sohn et al. attempt to simultaneously learn the regression coefficients and the output structure \cite{sohn_joint_2012}. We take a simultaneous approach, by applying a penalty function bounded by a constant to produce unbiased estimators for large coefficients, combined with an L2 penalty, similar to SCAD-L2 \cite{Zeng2012}. 
+
+\begin{equation}
+
+\argmin_{\beta} \displaystyle\sum \vert \vert X\beta - Y \vert \vert ^2 + \lambda_R \vert \vert \beta \vert \vert ^2 + \displaystyle \lambda_S  \displaystyle \sum_{\beta_{g,k} \approx \beta_{h,l}} p_{\lambda, a} (\beta_{g,k} - \beta_{h,l})
+
+\end{equation}
+
+where the penalty $p_{\lambda, a}$ has derivative 
+
+\begin{equation}
+p'_{\lambda,a}(\theta) = \left\{
+    \begin{array}{lr}
+    2\lambda\theta & \text{if } \theta \leq \lambda\\
+    \text{max}(\lambda_S(a-\theta),0) & \text{if } \theta > {a \over 2}
+    \end{array}
+    \right.
+\end{equation}
+
+ This approach allows us to simultaneously learn the regression coefficients and evaluate the validity of our prior information. 
+
+\subsection{Application}
+Although our approach is generalizable to a wide variety of multi-source network inference problems, we begin with the concrete example of network inference in two related species. Our approach to multi-species network inference is based on the hypothesis that gene regulation in related species is governed by similar but not necessarily identical gene regulatory networks, due to conservation of function through evolution. We represent conservation of network function by introducing constraints into the objective function for network inference that penalize differences between the weights of regulatory interactions believed to be a priori similar. These constraints favor the generation of similar networks for related species, and in the generally under-constrained regime of network inference can improve the accuracy of network recovery. We then go on to introduce a method to test the assumption of conserved network structure, and to relax the associated constraints on pairs of interactions for which data does not support conservation.
 
 \subsection{Gene regulatory network}
 We model the transcription rate of each gene as a weighted sum of transcription factor (TF) expression, and seek to identify the identities and regulatory weights of these TFs. This formulation matches that of the existing Inferelator algorithm, which models gene expression with linear differential equations \cite{bonneau_inferelator:_2006-1}. Our primary data for learning gene regulatory networks is expression data, consisting of time-series and steady state experiments. We use time-series data to approximate the rate of change of expression, and treat steady-state experiments as having reached equilibrium (constant expression). The rate at which $x_{i}$, the observed mRNA expression of gene $i$, changes, is governed by degradation of existing transcripts with rate $\alpha$ plus a linear combination of transcription factor (TF) expressions. 
@@ -103,9 +154,6 @@ Because every component of the objective function is an L2 norm, the entire prob
 
 In order to better understand the behavior of this objective function, consider the case where there is a one-to-one orthology between the species being considered (ie different cell-lines of the same organism). The choice of $\lambda_S$ allows one to interpolate between fitting each network independently ($\lambda_S=0$) and pooling data together as if it came from one source ($\lambda_S=\inf$). In addition to allowing interpolation between these extremes, our method allows pooling of data even when there is incomplete orthology. By introducing constraints on the similarity of individual interactions, rather than on the networks as a whole \cite{liu2011temporal}, we can pool some information across species even when a small fraction of genes have orthologs. This is particularly useful when dealing with a large number of species; pairwise orthologies may be nearly complete even when the number of genes present in every organism is small. 
 
-\subsection{Statistical approach and background}
-Most network inference problems have more predictors than experimental samples ($p >> N$). Many methods have been proposed for penalized regression, such as ridge regression \cite{hoerl_ridge_1970}, and applied to genomic data \cite{waldron_optimized_2011, li_network-constrained_2008}. In our application, we consider the case where related outputs (genes) are likely to be affected by common inputs (transcription factors). Fusion has been proposed as a method for utilizing correlation information from data by penalizing pairwise differences of coefficients \cite{Daye2009,Price2014}. Existing approaches using fusion have combined statistical strength across the multiple regression tasks by introducing regularization functions reflecting prior knowledge on output structure representing how outputs are related \cite{kim_tree-guided_2012,Land1997,Chen2010,Petry2011,Hebiri2011}. Price et al. and Bilgrau et al. use a fused ridge estimator for jointly estimating multiple inverse covariance matrices \cite{Price2014a,Bilgrau2015}; we take a similar approach, adding an fused L2 penalty to our ridge regression to incorporate prior knowledge about relationships between input-output pairs. In many cases, however, there is some uncertainty about the relationships that should be enforced. Sohn et al. attempt to simultaneously learn the regression coefficients and the output structure \cite{sohn_joint_2012}. We also take a simultaneous approach, where we apply a penalty function bounded by a constant to produce unbiased estimators for large coefficients, combined with an L2 penalty, similar to SCAD-L2 \cite{Zeng2012}. This approach allows us to simultaneously learn the regression coefficients and evaluate the validity of our prior information. 
-
 \subsection{Solving fused L2 problems using augmented matrices}
 We begin with the problem of constructing a design matrix to solve a fused L2 regression problem with a single response variable, because problems with multiple response variables and with multiple data sources can be converted into this form through vectorization. We then go on to show that, although the vectorized solution involves solving an impractically large system of equations, under typical biological conditions the structure of constraints allow the problem to be broken up into many smaller subproblems. 
 
@@ -150,7 +198,7 @@ Note that this is almost identical to equation 5, but now the network $\beta$ is
 The ierative solver is used for multi-source regression problems with complex orthology/similarity mappings, and also for solving the regularization path in order to pick regularization and fusion penalty weights. 
 
 \subsection{Fusion and regularization path}
-The iterative solver requires an initial guess $\beta^{S_i}(0)$ for each species $S_i$. When the initial guess is close to the final solution, a small number of iterations are necessary. Because a small change in $\lambda_S$ will tend to produce a small change in the network, solving for the $\lambda_S+\epsilon$ network given $\beta$s initialized to the $\lambda_S$ network requires a small number of iterations. As a consequence, the entire solution path corresponding to a large number of values of $\lambda_S= \lambda_S_1, \lambda_S_2, ..., \lambda_S_{max}$ can be solved efficiently by using the solution of each network as the initial guess for the next. 
+The iterative solver requires an initial guess $\beta^{S_i}(0)$ for each species $S_i$. When the initial guess is close to the final solution, a small number of iterations are necessary. Because a small change in $\lambda_S$ will tend to produce a small change in the network, solving for the $\lambda_S+\epsilon$ network given $\beta$s initialized to the $\lambda_S$ network requires a small number of iterations. As a consequence, the entire solution path corresponding to a large number of values of $\lambda_S= \lambda_{S_1}, \lambda_{S_2}, ..., \lambda_S_{max}$ can be solved efficiently by using the solution of each network as the initial guess for the next. 
 
 We use Tibshirani's cyclical coordinate descent algorithms from the 'glmnet' package \cite{friedman_regularization_2010} to compute a ridge regularization path. As jointly optimizing $\lambda_R$ and $\lambda_S$ is computationally prohibitive, we opted to optimize the parameters separately. First, we use glmnet to compute the regularization path for the ridge penalty, and given a range of $\lambda_R$ values, we fit models for each $\lambda_R$. We use cross validation to select the optimal parameter, the $\lambda_R$ value which minimizes the error of prediction on the leave out set. Following selection of $\lambda_R$, we search for optimal $\lambda_S$ again using cross validation. Note that both parameters are chosen without reference to the gold standard, which is used in a separate evaluation of network quality. 
 
@@ -195,11 +243,7 @@ p'_{\lambda,a}(\theta) = \left\{
 %    \right.
 %\end{equation}
     
-As in \cite{fan2001variable}, we use solve using iterative local quadratic approximation. 
-
-Specifically, $\beta^S(t)$ is the network on iteration $t$. 
-
-For each fused $B^{S_1}_{g,k} \approx B^{S_2}_{h,l}$ we define:
+As in \cite{fan2001variable}, we use solve using iterative local quadratic approximation. Specifically, $\beta^S(t)$ is the network on iteration $t$. For each fused $B^{S_1}_{g,k} \approx B^{S_2}_{h,l}$ we define:
 
 \begin{equation} 
 \theta(0)=0
@@ -241,6 +285,9 @@ S_{i,j} = \frac{\sigma^2_{\text{full model for }y_j}}{\sigma^2_{\text{full model
 \end{equation}
 When the residual is uncorrelated with the prediction, then removing regressor $i$ with weight $B_{i,j}^2$ from the model of $j$ will increase the residual by $B_{i,j}^2$ times the variance of regressor $i$. In the case of regularized regression, the regressor and residual need not be uncorrelated, so the approximation will not hold exactly. This scaling is similar to rescaling according to variance explained relative to an augmented design matrix that includes fusion constraints. The intuition for scaling that a large $B_{i,j}$ may be inferred because of overfitting with a TF $i$ varies little across the available data, or because the regulatory weight is strong. Only in the latter case is a large weight suggestive of a true regulatory interaction.
 
+\subsection{\textit{B. subtilis} and \textit{B. anthracis} data and orthology}
+We used a dataset collected for PY79, a derivative of strain 168, available on GEO with accession number GSE67023, and a dataset using BSB1, another derivative of strain 168, available at GEO with accession number GSE27219. We used two datasets for \texti{B. anthracis}, transcription profiling during iron starvation (E-MEXP-2272 on ArrayExpress), and time series over the life cycle (E-MEXP-788 on ArayExpress). We ran Inparanoid to obtain orthology mapping for \textit{B. subtilis} and \textit{B. anthracis} \cite{ostlund_inparanoid_2010}
+
 \section{Results}
 We tested the ability of fused regression to improve network inference performance, as well as the ability of adaptive fusion to learn the conservation of gene interactions, using both synthetic networks and real data. For the synthetic data, we generated random pairs of networks in which orthologous genes have similar regulatory interactions, then sampled gene expression from these networks, which we used to derive networks for comparison with the true networks. For real data, we computed recovery of a known gold standard in \textit{Bacillus subtilis}. We measured network inference performance with the area under the precision recall curve (AUPR). 
 
@@ -271,7 +318,7 @@ We used gene-expression data from \textit{\textit{Bacillus subtilis}} and \texti
 
 We obtained 1870 one-to-one orthologs from Inparanoid \cite{ostlund_inparanoid_2010}, 95 of which are transcription factors, which produced 177,650 fusion-constraints between gene interactions within the two species. This number represents only $14.7\%$ of the regulatory interaction matrix in \textit{B. subtilis} and $12.9\%$ in \textit{B. anthracis}. The use of such dissimilar species is a test of whether fusion can improve network-inference even when the overlap in interactions is very small. 
 
-In order to evaluate network inference performance, and for use as priors, we used a gold standard of 2896 known \textit{B. subtilis} interactions with corresponding activation and repression sign. Of these 2896 priors, 968 had corresponding interactions in \textit{B. anthracis}. Based on our simulation results, we can expect the greatest gains in network-inference performance from fusion when the species of interest has a small number of available conditions, but data is abundant in a related species. However, in order to evaluate performance objectively a gold-standard of known interactions is necessary. As a result, we can only evaluate network recovery for \textit{B. subtilis}, and \textit{B. subtilis} also has the majority of our conditions. In order to simulate the data-poor regime, we subsampled our \textit{B. subtilis} data. Specifically, we divided our \textit{B. subtilis} data into $k$ folds, and then for each fold fit a network to the \textit{B. subtilis} data from that fold alone fused to the entire 72 \textit{B. anthracis} conditions. We can then compute performance metrics (ie AUPR) for each fold, and use their variability across folds to test for significance of any improvements relating to the use of fusion constraints. 
+To assess network inference performance, and for use as priors, we used a gold standard of 3040 known \textit{B. subtilis} interactions with corresponding activation and repression sign. Of these 3040 priors, 968 had corresponding interactions in \textit{B. anthracis}. Based on our simulation results, we can expect the greatest gains in network-inference performance from fusion when the species of interest has a small number of available conditions, but data is abundant in a related species. However, in order to evaluate performance objectively a gold-standard of known interactions is necessary. As a result, we can only evaluate network recovery for \textit{B. subtilis}, and \textit{B. subtilis} also has the majority of our conditions. In order to simulate the data-poor regime, we subsampled our \textit{B. subtilis} data. Specifically, we divided our \textit{B. subtilis} data into $k$ folds, and then for each fold fit a network to the \textit{B. subtilis} data from that fold alone fused to the entire 72 \textit{B. anthracis} conditions. We can then compute performance metrics (ie AUPR) for each fold, and use their variability across folds to test for significance of any improvements relating to the use of fusion constraints. 
 
 In order to evaluate network recovery performance, we opted to evaluate AUPR on the sub-network of genes with fusion constraints. Although simulation results demonstrate that the non-constrained sub-network exhibit benefits from fusion, these benefits are expected to be very small given the small fraction of interactions with constraints in our cross-species application (Figure 1c). Moreover, the evolutionarily conserved sub-network is often of primary interest in cross-species studies. Application of fused L2 to our subsampled \textit{B. subtilis} and \textit{B. anthracis} datasets produced performance gains relative to the $\lambda_S=0$ case, but these performance gains, measured across the whole network, were very small (Figure 5b). However, inspection of precision recall curves showed that there is substantially increased precision at low values of recall. Essentially, precision increases for the high confidence part of the network but not for the low confidence part of the network. As a result, the improvements in performance may be more useful than would be suggested by AUPR alone. Interactions suggested by genome wide analysis are useful for target prediction, and the ranking of interactions produced by a network inference algorithms is a useful guide to what order these experiments should be carried out in. The high confidence part of the network represents interactions that are likely candidates for experimental validation, so improvement in recovery of these interactions is particularly useful in guiding research. 
 
