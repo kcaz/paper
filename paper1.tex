@@ -266,7 +266,7 @@ When the number of genes in each fusion constraints is relatively small, the aug
 On each iteration $t$ the iterative solver computes
 
 \begin{equation}
-\text{argmin}_{\beta^{S}} \displaystyle\sum_{S \in \{1, 2\}} ||X^{S}\beta^{S}(t) - Y^{S}||^2 + \lambda_R||\beta^{S}(t)||^2 + \lambda_S\displaystyle \sum_{\substack{(g,h) \in orth,\\
+\argmin_{\beta^S} \displaystyle\sum_{S \in \{1, 2\}} ||X^{S}\beta^{S}(t) - Y^{S}||^2 + \lambda_R||\beta^{S}(t)||^2 + \lambda_S\displaystyle \sum_{\substack{(g,h) \in orth,\\
  (h,l) \in orth}} ||\beta^{S}_{g,k}(t) - \beta_{h,l}^{S}(t-1)||^2
 \end{equation}
 Note that this is almost identical to equation 5, but now the network $\beta$ is a function of the iteration number $t$. On each step, we compute $\beta$s that minimize a penalized cost function where the fusion penalties encourage similarity between a parameter and its fused-to parameter from the previous iteration's solution. This process is iterated until the estimated $\beta$s converge. Because each iteration reduces the error between $\beta(t)$ and $\beta(t-1)$, and because $\beta(t) = \beta(t-1)$ is the globally optimal solution, this process must eventually converge to the same network as equation \ref{eqn:main}. Although we have not produced bounds on the convergence rate, which also depends on the structure of constraints, in practice a small number of iterations are necessary.
