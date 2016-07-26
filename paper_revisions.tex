@@ -201,7 +201,7 @@ $\beta^S(t+1)$ is obtained by fitting the ridge-fused model with fusion constrai
 Our adaptive penalty function introduces, in addition to regularization and fusion penalty weights $\lambda_R$ and $\lambda_S$, an unknown parameter $a$.
 We could employ grid search using cross-validation to search for the best parameters, but for many data sets, this can be computationally expensive. 
 Moreover, we are primarily interested in using this saturating penalty as a way of testing the hypothesis that conservation in GRNs can be predicted based off of known similarities between genes. 
-Therefore, we propose a user-defined $a$, where this parameter is set using the distribution of differences between fused weights from independently fit networks. The choice of which value in this distribution to use for $a$ represents the working hypothesis for the fraction of fused interactions which should be unfused.
+Therefore, we propose setting $a$ based on the distribution of differences between fused weights from independently fit networks. These networks can be fit without fusion, prior to the adaptive fusion procedure. The choice of which percentile of this distribution to use for $a$ represents the working hypothesis for the fraction of fused interactions which should be unfused.
 
 
  
@@ -248,20 +248,19 @@ The rate at which $x_{i}$, the observed mRNA expression of gene $i$, changes, is
 where $\beta_{i,j}$ represents the weight of TF $j$ on gene $i$, and $\alpha$ is the decay rate of gene $i$. We fix the decay rate $\alpha$ for all genes, and set it assuming a time-constant of 10 minutes \cite{hambraeus_genome-wide_2003, selinger_global_2003}, as in \cite{greenfield_robust_2013}. Let $x_i(t)$ be the expression of gene $i$ at time $t$. 
 Given time-series data on the expression of gene $i$ at timepoints $t_k$ and $t_{k+1}$, we can approximate the rate of change of $x_i$ as $x_i'(t_k)=\frac{x_i(t_{k+1})-x_i(t_k)}{t_{k+1}-t_k}$. 
 We treat steady-state data as having a derivative of zero. 
-This gives us, for each gene $i$ and time $t_{k}$ an equation
+
+For timeseries conditions this gives us, for each gene $i$ and time $t_{k}$ an equation
 
 \begin{equation}
 \frac{x_i(t_{k+1})-x_i(t_k)}{t_{k+1}-t_k} + \alpha_{i}x_{i}(t_k)= \sum \beta_{i,j}x_{j}(t_k)
 \end{equation}
 where $j \neq i$ 
-for time series and 
+
+And for steady state conditions
 \begin{equation}
 \alpha_{i}x_{i}(t_k) = \sum \beta_{i,j}x_{j}(t_k)
 \end{equation}
-for steady state. 
-
-
-\noindent We can summarize these equations in matrix form as
+Both kinds of conditions can be included in the set of equations to be solved. We can summarize these equations in matrix form as
 \begin{equation}
 Y = X \beta 
 \end{equation}
@@ -280,11 +279,13 @@ Because a transcription factor's raw abundance is not always a good predictor of
 \subsubsection{Fused gene regulatory networks}
 
 Information about the partially conserved structure of gene regulation is introduced through the incorporation of constraints into the above regression formulation. These constraints penalize differences between interaction weights in the networks of multiple species that are expected to be similar based on prior biological knowledge. 
-We can then solve the penalized regression problems simultaneously, in order to obtain a gene regulatory network (GRN) for each species. 
-Consider the case of organisms $A$ and $B$, governed by GRNs $\beta^A$ and $\beta^B$ (the following approach applies equally well to more than two species but for simplicity we continue with the case of two species). 
-When TF $g^A$ in organism $A$ and TF $h^B$ in organism $B$ are orthologs, and gene $k^A$ and $l^B$ are orthologs, then we expect that the $g^A \rightarrow k^A$ interaction weight should be similar to the $h^B \rightarrow l^B$ interaction weight, and we introduce a fusion constraint between these analogous interactions. 
-In terms of the above regression formulation, we expect that $\beta^A_{g,k} \approx \beta^B_{h,l}$, and include a penalty term $\lambda_Sp(\beta^A_{g,k} - \beta^B_{h,l})$ in the quantity being minimized in order to encourage similarity. 
-The function $p(x)$ controls the shape of the relationship between weight dissimilarity and penalty, while scalar $\lambda_S$ controls the overall scaling of the penalization of differences between fused coefficients. $\lambda_S$ controls the tradeoff between fitting the expression data-sets individually and producing a set of networks that conform to evolutionary prior knowledge. 
+We can then solve the penalized regression problems simultaneously, in order to obtain a gene regulatory network (GRN) for each species.
+
+
+Consider the case of organisms $A$ and $B$, governed by GRNs $\beta^A$ and $\beta^B$ (the following approach applies equally well to more than two species - where the set of constraints is the enumeration of all constraints between pairs of species). When TF $g^A$ in organism $A$ and TF $h^B$ in organism $B$ are orthologs, and gene $k^A$ and $l^B$ are orthologs, then we expect that the $g^A \rightarrow k^A$ interaction weight should be similar to the $h^B \rightarrow l^B$ interaction weight, and we introduce a fusion constraint between these analogous interactions. This is shown schematically in Figure \ref{fusion}. In terms of the above regression formulation, we expect that $\beta^A_{g,k} \approx \beta^B_{h,l}$, and include a penalty term $\lambda_Sp(\beta^A_{g,k} - \beta^B_{h,l})$ in the quantity being minimized in order to encourage similarity. 
+
+
+The function $p(x)$ controls the shape of the penalty function, while scalar $\lambda_S$ controls the overall scaling of the penalization of differences between fused coefficients. $\lambda_S$ controls the tradeoff between fitting the expression data-sets individually and producing a set of networks that conform to evolutionary prior knowledge. 
 This gives us the final equation to be minimized: 
 
 \begin{equation}
@@ -293,13 +294,8 @@ This gives us the final equation to be minimized:
 \end{equation}
 
 where the second sum is over pairs of interactions with fusion constraints. 
-In the fused L2 algorithm presented here, the penalty function is equal to the L2 norm of the difference in regulatory weight of fused coefficients, $p(x)=x^2$. 
-Every component of the objective function is an L2 norm and thus the problem is convex and can in fact be solved through linear regression with an augmented design matrix. 
 
-As an example, consider the case where there is a one-to-one orthology between the species being considered (ie different cell-lines of the same organism). 
-The choice of $\lambda_S$ allows one to interpolate between fitting each network independently ($\lambda_S=0$) and pooling data together as if it came from one source ($\lambda_S=\inf$). 
-In addition to performing well between these extremes, our method allows pooling of data even when there is incomplete orthology. 
-By introducing constraints on the similarity of individual interactions, rather than on the networks as a whole \cite{parikh2011treegl}, we can pool some information across species even when a small fraction of genes have orthologs. 
+As an example of how this formulation allows pooling of data across multiple sources, consider the case where there is a one-to-one orthology between the species being considered (ie different cell-lines of the same organism). The choice of $\lambda_S$ allows one to interpolate between fitting each network independently ($\lambda_S=0$) and pooling data together as if it came from one source ($\lambda_S=\inf$). In the case of cross-species network inference, there is unlikely to be a complete one-to-one orthology. However, because we  constraints the similarity of individual interactions, rather than on the networks as a whole \cite{parikh2011treegl}, we can pool some information across species even when a small fraction of genes have orthologs. 
 
 
 \subsubsection{Simulated data}
@@ -333,34 +329,26 @@ S_{i,j} = \frac{\sigma^2_{\text{full model for }y_j}}{\sigma^2_{\text{full model
 We used a dataset collected for PY79, a derivative of strain 168, available on GEO with accession number GSE67023, and a dataset using BSB1, another derivative of strain 168, available at GEO with accession number GSE27219. 
 We used two datasets for \textit{B. anthracis}, transcription profiling during iron starvation (E-MEXP-2272 on ArrayExpress), and time series over the life cycle (E-MEXP-788 on ArayExpress). We ran Inparanoid to obtain orthology mapping for \textit{B. subtilis} and \textit{B. anthracis} \cite{ostlund_inparanoid_2010}
 
+[KARI - INSERT HOW GOLD STANDARD WAS OBTAINED]
+
 \section{Results}
 We used both synthetic networks and real data to test the ability of fused regression to improve the performance of network inference, and the ability of our adaptive fusion procedure to identify conserved interactions between orthologous genes. 
 For the synthetic data, we generated random pairs of networks in which orthologous genes have similar regulatory interactions, and then sampled gene expression from these networks, which we used to derive learned networks for comparison with the input (true) networks. 
-For real data, we computed recovery of a known gold standard in \textit{Bacillus subtilis} \cite{michna_subtiwikidatabase_2014}. 
+For real data, we examined recovery of a known gold standard in \textit{Bacillus subtilis} \cite{michna_subtiwikidatabase_2014}. 
 
-\subsection{Using fused regression to learn related networks}
-It is known that the accuracy of network inference improves with additional data \cite{bar-joseph_computational_2003}. 
-Using related data for network inference allows us to leverage statistical power from disparate sources, effectively increasing the sample size and boosting the sensitivity and specificity of learned interactions. 
-We created synthetic networks to approximate two related biological processes, then evaluated performance of our fused L2 regression, which learns the networks simultaneously given a prior on the relatedness of interactions. 
-We compared recovery of the artificial 10 TFs by 200 genes networks, using fused L2 versus learning networks separately, and varied the amounts of simulated expression data samples made available to the solver. 
-When the amount of data from the second species was held constant, increasing the amount of data available for learning the network for the first species resulted in a more accurate network prediction, as expected  (figure \ref{fusion}b). 
-When we increased the amount of data from the second species, we obtained performance gains on network one using fused L2 regression, demonstrating our ability to improve network inference on one dataset through incorporation of a related dataset.
+\subsection{Simulations}
+\subsubsection{Using fused regression to learn related networks}
+We created synthetic networks to approximate two related biological processes, then evaluated performance of our fused L2 regression, which learns the networks simultaneously given a prior on the relatedness of interactions. Simulated networks consisted of pairs of related 10 TF by 200 gene networks, with varying numbers of expression data samples made available to the solver. In order to compare the relative contribution of data in the species of interest (species 1) and in a related organism (species 2) to network recovery, we varied the number of conditions in each species while evaluating the mean-squared-error between the recovered network for species 1 and its known true network. When the amount of data from the related species was held constant, increasing the amount of data available for learning the network for the species of interest resulted in a more accurate network prediction, as expected  (figure \ref{fusion}b). Similarly, when we increased the amount of data from the related species, we obtained performance gains on network one using fused L2 regression, demonstrating our ability to improve network inference on one dataset through incorporation of a related dataset.
 
 
-\subsection{Fused regression improves performance on both the constrained and non-constrained parts of the network}
-Our approach is useful for learning networks from similar sources such as related cell types from the same species, where there exists a one-to-one mapping of genes, as well as datasets where the orthology mapping does not span all genes. 
-This can occur when using different technology, eg microarray and RNAseq, where there is incomplete overlap in the genes that each method assays as well as incomplete overlap in the genes expressed in different experimental designs.  
-When orthology is incomplete we are interested in knowing if performance gains from fused regression are limited to those interactions which have fusion constraints, or if they extend to the entire network. 
-To test this we used multiple 20 TF by 200 gene synthetic networks with varying proportions of orthologous TFs and genes. 
-We divided networks into those interactions with fusion constraints (the constrained subnetwork) and interactions without fusion constraints (the non-constrained subnetwork). 
-We varied the weight on the fusion penalty, $\lambda_S$, and evaluated performance by computing AUPR on the constrained subnetwork, the non-constrained subnetwork, and the whole network (figure \ref{fusion}c). 
-Since the conserved subgraphs were similar to each other, we expected performance to improve as the fusion penalty weight increased. 
-We observed this, particularly for the constrained subnetwork. 
-As $\lambda_S$ increased, interactions with fusion constraints were encouraged to be more similar. 
-Interestingly, performance gains were seen even in the portion of the network that was unconstrained by fusion. This is because a gene may have some some interactions that are constrained by fusion - regulation by TFs with orthologs - and some interactions that are unconstrained - regulation by TFs without orthologs. Because both constrained and unconstrained components compete to explain the same pattern of gene expression, improving recovery of the constrained sub-network will tend to improve recovery for the unconstrained sub-network as well.
+\subsubsection{Fused regression improves performance on both the constrained and non-constrained parts of the network}
+Our approach is useful for learning networks from similar sources such as related cell types from the same species, where there exists a one-to-one mapping of genes, as well as datasets where the orthology mapping does not span all genes. This latter case is typical not only for cross-species network inference, but can occur when using different technology, eg microarray and RNAseq, where there is incomplete overlap in the genes that each method assays as well as incomplete overlap in the genes expressed in different experimental designs. When orthology is incomplete we are interested in knowing if performance gains from fused regression are limited to those interactions which have fusion constraints, or if they extend to the entire network. To test this we used multiple 20 TF by 200 gene synthetic networks with varying proportions of orthologous TFs and genes. We divided networks into those interactions with fusion constraints (the constrained subnetwork) and interactions without fusion constraints (the non-constrained subnetwork). 
+We varied the weight on the fusion penalty, $\lambda_S$, and evaluated performance by computing AUPR on the constrained subnetwork, the non-constrained subnetwork, and the whole network (Figures \ref{fusion}c-f). Because the conserved subgraphs were known to be similar to each other, we expected performance to improve as the fusion penalty weight increased (Figures \ref{fusion}c-f, Constrained).
+
+Interestingly, performance gains were seen even in the portion of the network that was unconstrained by fusion (Figures \ref{fusion}c-f, Non-constrained). This is because a gene may have some some interactions that are constrained by fusion - regulation by TFs with orthologs - and some interactions that are unconstrained - regulation by TFs without orthologs. Because both constrained and unconstrained components compete to explain the same pattern of gene expression, improving recovery of the constrained sub-network will tend to improve recovery for the unconstrained sub-network as well.
 
 
-\subsection{Adaptive fusion successfully identifies and unfuses 'neofunctionalized' genes}
+\subsubsection{Adaptive fusion successfully identifies and unfuses 'neofunctionalized' genes}
 Orthology prediction is not a proxy for functional conservation \cite{gabaldon_functional_2013, studer_how_2009, nehrt_testing_2011}. 
 To allow for orthologous genes to be unfused we implemented an adaptive fusion algorithm that attempts to optimize a nonconvex saturating penalty function on differences between fused interactions (figure \ref{adapt-schematic}). 
 Pairs of interactions that are dissimilar even after fusion, which sit in the flat portion of this penalty function, are effectively ``unfused,'' and no further penalty is incurred as differences in interaction weights grow. 
@@ -372,11 +360,11 @@ Because we knew which entries in the orthology mapping were ``incorrect'' (not r
 We verified that adaptive-fusion unfused mostly ``incorrectly fused'' interactions (figure \ref{adaptivefusion}a red dots), while leaving truly analogous interactions fused (figure \ref{adaptivefusion}a green dots). 
 
 We then compared the recovery of interaction weights which were accurately fused, and recovery of interaction weights which were inaccurately fused due to incorrect orthology information (figure \ref{adaptivefusion}b). 
-Because fused L2 heavily penalizes large differences between weights which are predicted to be similar, it is able to retrieve a more accurate network for those interactions with true fusion constraints than by learning networks separately (measured by MSE between the true and inferred interaction weights) . 
+Because fused L2 heavily penalizes large differences between weights which are predicted to be similar, it is able to retrieve a more accurate network for those interactions with true fusion constraints than by learning networks separately (measured by MSE between the true and inferred interaction weights). 
 In this simulation, however, the gains accomplished through fused regression do not extend to those interactions lacking true fusion constraints, and the error remains similar to learning networks separately. When we applied adaptive fusion, we did not observe an improvement in network recovery (relative to fused L2). 
-However, we were able to identify fusion constraints reflecting incorrect orthology information that had been provided to the algorithm (figure \ref{adaptivefusion}subsection). 
+However, we were able to identify fusion constraints reflecting incorrect orthology information that had been provided to the algorithm (Figure \ref{adaptivefusion} subsection). [ZACK - WE NEED TO WRITE MORE ABOUT THIS] 
 
-\c{Cross-species network inference using bacterial data}
+\subsection{Fused network inference with bacterial data}
 We used gene-expression data from \textit{Bacillus subtilis} and \textit{B. anthracis} in order to assess performance gains of fused regression on real data. 
 Our \textit{B subtilis} data set consists of 360 time-series and steady-state observations of 4891 genes, 4100 of which are protein coding \cite{kunst_complete_1997}, during the life cycle.
 Our \textit{\textit{B. anthracis}} dataset consists of 72 time-series and steady-state observations of 5536 genes comprising data from distinct points in the life cycle and iron-starvation conditions. 
@@ -392,9 +380,10 @@ As a result, we can only evaluate network recovery for \textit{B. subtilis}, and
 In order to simulate the data-poor regime, we subsampled our \textit{B. subtilis} data. 
 We divided our \textit{B. subtilis} data into $k$ folds, and then for each fold fit a network to the \textit{B. subtilis} data from that fold alone fused to the entire 72 \textit{B. anthracis} conditions (figure \ref{xspecies-real}a). 
 Though overall performance is hindered by our subsampling of \textit{B. subtilis} data (a necessary procedure to allow evaluation of networks) we demonstrate marked improvement in learning the \textit{B. subtilis} network when using fused regression (figure \ref{xspecies-real}a). 
-Notably, these performance gains occur mostly at low values of recall (near the top of our prediction ranks, where biologists would presumably focus validation and followup experiments). 
+Notably, these performance gains occur mostly at low values of recall. That is: the highest confidence part of the network is inferred more accurately, with minimal gains for interactions which are more uncertain. Because these interactions are likely to be the focus of followup experiments and validation, gains here are more valuable for prioritizing the order in which interactions are investigated. 
 
-\subsection{Testing adaptive fusion using bacterial data}
+\subsubsection{Adaptive fusion using bacterial data}
+[ZACK MORE HERE TOO]
  The goal of adaptive fusion is to unfuse constraints between non-conserved interactions, while leaving intact all other constraints. 
  However, because we lacked a comprehensive gold standard of known non-conserved interactions between \textit{B. subtilis} and \textit{B. anthracis}, we were unable to directly evaluate how accurately adaptive fusion identified these interactions.
   We opted instead to introduce a large number of random fusion constraints between genes not known to be orthologous. 
@@ -404,17 +393,16 @@ Notably, these performance gains occur mostly at low values of recall (near the 
  Although it may seem odd that a large fraction of fake constraints were left intact, we note that biological networks tend to be sparse, so that many of the random fusion constraints are between coefficients with near zero weight (and therefore near zero difference in weight) (figure \ref{xspecies-real}c). 
 
 
-\subsection{Integrating datasets from different platforms using fused regression}
-Although there are many large-scale collaborations which attempt to make protocols as uniform as possible for comparability between datasets generated by different labs \cite{paten_nih_2015,kundaje_integrative_2015} and several methods for removing batch effects \cite{irizarry_exploration_2003,johnson_adjusting_2007}, there still exists technical and biologial variability between many experiments attempting to capture the same or similar experimental conditions esspecially when experiments employ different experimental platforms. 
-With the advent of RNAseq, for example, microarray based technologies are no longer the dominant assay for genome-wide expression, but a large body of accumulated legacy data remains useful if it can be integrated with more modern techniques. 
+ \subsubsection{Single species applications}
+ 
+Although the approach we describe was developed with cross-species network inference in mind, the framework of defining fusion constraints on TF gene interactions expected to be similar is quite general, and can be applied to data from a single organism. Despite the many large-scale collaborations which attempt to make protocols as uniform as possible for comparability between datasets generated by different labs \cite{paten_nih_2015,kundaje_integrative_2015} and several methods for removing batch effects \cite{irizarry_exploration_2003,johnson_adjusting_2007}, there still exists technical and biologial variability between many experiments attempting to capture the same or similar experimental conditions esspecially when experiments employ different experimental platforms. 
+With the advent of RNAseq, for example, microarray based technologies are no longer the dominant assay for genome-wide expression, but a large body of accumulated legacy data remains useful if it can be integrated with more modern techniques.
+
 Currently, the most widely used approach to combining datasets for network inference is to learn networks from disparate datasets separately, then rank combine the networks as in Marbach et al \cite{marbach_revealing_2010}.
 We included, along with our \textit{B. subtilis} dataset, a previously published dataset containing 269 samples covering 104 conditions, obtained using a different tiling microarray (vs custom microarray) and different strain of \textit{B. subtilis} \cite{nicolas2012condition}. 
 We compared performance when learning the networks separately and then rank combining (as in cite Ciofani) to learning the networks simultaneously using fusion regression and show large improvement in performance using our fused L2 approach (figure \ref{fusedl2-real}a). 
 
-Information about the similarity of TF-gene interactions can also come from knowledge about the promoter region or the structure, for bacteria, of polycistronic transcripts. 
-In bacteria, genes within the same operon are typically under the control of the same promoter \cite{lawrence_shared_2002}. 
-We posited, therefore, that genes within the same operon will be regulated similarly by the same transcription factors. 
-We applied fusion regression by creating fusion constraints between a given transcription factor and genes within the same operon, and showed a boost in \textit{B. subtilis} network recovery using within-species fusion (figure \ref{fusedl2-real}b). 
+Our approach can also make use of forms of biological data other than RNA expression. Information about the expected similarity of TF-gene interactions can come from knowledge about the promoter region or the structure, for bacteria, of polycistronic transcripts. In bacteria, genes within the same operon are typically under the control of the same promoter \cite{lawrence_shared_2002}. We posited, therefore, that genes within the same operon will be regulated similarly by the same transcription factors. We applied fusion regression by creating fusion constraints between a given transcription factor and genes within the same operon, and showed a boost in \textit{B. subtilis} network recovery using within-species fusion (figure \ref{fusedl2-real}b). 
 
 \subsection{Transcription factor activity estimation integrates into fusion regression approach}
 We tested a combination of our fused regression approach with a method for estimating transcription factor activities (TFA). 
@@ -425,43 +413,37 @@ We estimate TFA based on known regulatory interactions using network component a
 To test the integration of this approach with our fused regression, we assessed the combination of \textit{B. subtilis} datasets, as in figure \ref{fusedl2-real}a, with the incorporation of TFA estimation. 
 We randomly divided the prior known interactions in half, and used half to learn TFA and to generate priors on network structure. 
 The remaining interactions were reserved as a gold standard for validation. 
-As in previous studies, we observed a marked improvement in network inference when using transcription factor activity (figure \ref{tfa}). 
-We also obtained AUPR improvement when using fused regression on TFA, and showed that our gains from sharing information across datasets using fused regression were preserved and even enhanced by using TFA. 
+As in previous studies, we observed a marked improvement in network inference when using transcription factor activity (figure \ref{tfa}). We also obtained AUPR improvement when using fused regression alongside TFA; gains from sharing information across datasets using fused regression were preserved and even enhanced by using TFA. 
 
 \section{Discussion}
 Gene expression data, such as microarray or RNA seq, provide information about the relationship between genes by allowing an experimenter to measure correlations in expression value over time or across conditions. Many sources of information - such as the knowledge that two genes are related through orthology or belong to the same operon - provide additional information about the relationships between these gene-gene relationships. 
 For example,  two genes that belong to the same operon are likely to have a similar set of regulators \cite{lawrence_shared_2002}, but knowing that two genes are members of a polycistronic transcript does little to inform the identity (strength, sign) of those regulators. 
 Meta-information about the structure of gene regulatory networks, specifically which pairs of interactions are \textit{a priori} likely to be similar to one another, can provide a powerful set of constraints to improve network inference performance \cite{roy_arboretum:_2013, pierson_sharing_2015}. 
-We present a general framework for gene regulatory network inference that incorporates this meta-information - termed fusion constraints - and apply the technique to the problem of simultaneous inference of regulatory networks in multiple species (\textit{B. subtilis} and \textit{B. anthracis}). 
+We present a general framework for gene regulatory network inference that incorporates this meta-information - termed fusion constraints - and apply the technique to the problem of simultaneous inference of regulatory networks in multiple species (\textit{B. subtilis} and \textit{B. anthracis}), as well as to the problems of combining data from multiple experimental platforms and information about operon structure.
 
-We apply this algorithm to the problem of network inference in two distantly related biological organisms -- \textit{B. subtilis} and \textit{B. anthracis} -- and show that network recovery is improved through the introduction of fusion constraints between pairs of orthologous genes. 
+\textit{B. subtilis} and \textit{B. anthracis} are distantly related bacterial species with limited gene orthology [ZACK - HOW DISTANTLY?]. Nevertheless we show that network recovery in \textit{B. subtilis} can be improved through the inclusion of expression data from \textif{B. anthracis}. 
 Many previous methods for cross-species network inference operate on the conserved subset of orthologous genes \cite{dillman_comparative_2015}. 
 This assumption may be appropriate with very closely related species, but could not be applied in this domain, where a large fraction (62\% and 67\%) of the \textit{B. subtilis} and \textit{B. anthracis} genomes do not have clear orthologs (and many orthologs have ambiguous many-to-many groupings). 
-Our method, in contrast, can obtain improvements in network inference performance even when the conserved subset of genes is small. 
-This approach is particularly interesting in light of the diversity of important model organisms used in modern biology. 
-Different model systems provide different advantages and disadvantages for experimental design \cite{stolfi_genetic_2012}, but without a principled mechanism for combining data from multiple sources, it is difficult to fully leverage data obtained from even a slightly different model system. 
-We further demonstrate the viability of fused L2 as a method for combining data from multiple experimental platforms, where fusion is between each identical regulator-gene pair. 
+Our method, in contrast, can obtain improvements in network inference performance even when the conserved subset of genes is small. [DISCUSS RELATIONSHIP TO OTHER PAPERS HERE]
+
+
+This approach is particularly interesting in light of the diversity of important model organisms used in modern biology. Different model systems provide different advantages and disadvantages for experimental design \cite{stolfi_genetic_2012}, but without a principled mechanism for combining data from multiple sources, it is difficult to fully leverage data obtained from even a slightly different model system. 
+
 Because the algorithm we developed can accomodate constraints between arbitrary pairs of regulatory interactions, any biological prior representing information about expected regulatory similarity can be represented, even if the prior provides no information about the magnitude or direction of regulation. 
 We demonstrate this flexibility through the novel incorporation of operon structure into the gene-regulatory network inference problem. 
 In this application, fusion reflects the assumption that genes in the same operons have similar regulators \cite{lawrence_shared_2002}. 
-The ability to incorporate multiple data sets describing related processes, as well as multiple data types, in a principled manner, helps us take advantage of the breadth of experimentation in biology to better learn the structure of gene regulation. 
-We illustrate this by combining two different \textit{B. subtilis} datasets and show that fused L2 is an improvement over current approaches to combining data \cite{marbach_revealing_2010} because of our ability to exploit the statistical power that our expanded datasets afford us. 
 
 
 Although it is important to take advantage of the similarities of related organisms for generating improved models of gene regulation, it is also critically important to understand how systems differ from one another. 
-Our cross-species network inference method is premised on the assumption that orthologous genes have similar regulators. 
-Existing approaches to the genome-wide testing of this assumption learn regulatory networks separately, then compare to identify conservation \cite{aytes_cross-species_2014}. 
-Because network inference is typically underconstrained, fitting a network that describes a particular set of experimental observations involves sampling a single network from a large set of networks that fit the data equally (or almost equally) as well. As a result, the existence of a difference between corresponding regulatory interactions in a pair of experimentally derived networks is weak evidence that a difference truly does exist. 
+Our cross-species network inference method is premised on the assumption that orthologous genes have similar regulators. Existing approaches to the genome-wide testing of this assumption learn regulatory networks separately, then compare to identify conservation \cite{aytes_cross-species_2014}. 
+Because network inference is typically underconstrained, fitting a network that describes a particular set of experimental observations amounts to sampling a single network from a large set of networks that fit the data equally (or almost equally) as well. As a result, the existence of a difference between corresponding regulatory interactions in a pair of experimentally derived networks is weak evidence that a difference truly does exist. 
 Uncoupled global network inference algorithms are a very weak tool for uncovering evolutionary divergence. 
 Our method explicitly favors recovering networks for which evolutionarily corresponding interactions are similar. 
 As a result, the failure to obtain networks that confirm evolutionary conservation is stronger evidence that conservation does not exist; the next best network that does exhibit conservation must fit the data much worse to have overcome the bias built into the fusion constraints. 
 
-We have described a method -- adaptive fusion -- that attempts to learn which fusion constraints should be relaxed while the network is being learned. 
-This method is based on minimizing a saturating penalty function on fusion constraints, similar to a class of penalties that have been developed to minimise bias in regularized regression \cite{fan2001variable,zhang2010nearly}. 
-The result of adaptive fusion is both a network and a new set of fusion constraints, describing the learned fusion weights (including which fusion constraints have been relaxed). 
-For the multiple species case, relaxation of fusion constraints represents orthologs which do not share similar interactions presumably due to evolution of regulatory circuitry \cite{kellis_proof_2004}. %not sure what radid is
-When jointly learning networks describing processes in different cell lines, this may identify interesting context-specific behavior. 
-Genes may be fused together on the basis of similar binding sites or chromatin features, and the relaxing of the fusion penalty indicates divergence of gene function. 
+Although fused regression allows more accurate identification of pairs of non-conserved interactions, the weights obtained for these interactions will be biased towards one another. We have described a method -- adaptive fusion -- that attempts to address this bias by simultaneously learning the networks and constraint weights. This method is based on minimizing a saturating penalty function on fusion constraints, similar to a class of penalties that have been developed to minimise bias in regularized regression \cite{fan2001variable,zhang2010nearly}. 
+The result of adaptive fusion is both a network and a new set of fusion constraints, the weights of which can be interpreted as describing conservation structure across the networks.For the multiple species case, relaxation of fusion constraints represents orthologs which do not share similar interactions presumably due to evolution of regulatory circuitry \cite{kellis_proof_2004}. %not sure what radid is
+When jointly learning networks describing processes in different cell lines, this may identify interesting context-specific behavior. Genes may be fused together on the basis of similar binding sites or chromatin features, and the relaxing of the fusion penalty indicates divergence of gene function. 
 
 Because our model shares its basic assumptions about the role of transcription factors in gene expression dynamics with models developed for single-species network inference, we are able to leverage techniques developed for the single-species estimation of transctiption factor activity \cite{fu_reconstructing_2011}. 
 The performance gains of this additional step in the cross-species case are significant.
@@ -477,6 +459,15 @@ At the same time these methods allow us to test our assumptions on how similar b
 \bibliographystyle{plain}
 \bibliography{paper1.bib}
 
+\pagebreak
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=.5,trim=0mm 0mm 0mm 0mm,clip]{party3.eps}
+    \caption{\label{cartoon} Schematic representation of design matrix construction. Here, the circles and hexagons correspond to different species. 
+    Bidirectional arrows represent orthology information and dotted arrows represent putative interactions between TFs and genes. 
+    Rectangles represent matrices; because weights can be solved independently unless there exists fusion constraints between them, we identify related weights and construct matrix for solving. }
+\end{figure}
+\pagebreak
 
 \begin{figure}
 \begin{center}
@@ -486,25 +477,25 @@ At the same time these methods allow us to test our assumptions on how similar b
   In order to demonstrate the utility of fused network inference in combining data, we generate two networks with 10 TFs and 200 genes (75\% sparsity). Mean squared error of the inferred vs. true coefficient matrices for network 1 are plotted as a function of the number of conditions generated for species 1 (x-axis) and the number of conditions generated for species 2 (y-axis). 
   As expected, increasing the number of samples available for the species of interest improves network inference performance. 
   However, because we are fusing to data from a related species, similar gains are observed when increasing the amount of data available in this second species. 
-  \textbf{C-F} Show the varying effects of fusion on simulated networks with different levels of conservation. We generate a series of networks with 20 TFs by 200 genes in two species, (50\% sparsity) while varying the fraction of gene orthologies in the simulated networks. For each network, we evaluated AUPR on one of the species for: all interactions (blue line), interactions with fusion constraints (green line), and interactions without fusion constraints (orange line). At every level of conservation, constrained interactions show the largest benefits of fusion, with the magnitude of the benefit growing with fraction of orthologous genes. 
+  \textbf{C-F} Show the varying effects of fusion on simulated networks with different levels of conservation. We generate a series of networks with 20 TFs by 200 genes in two species, (50\% sparsity) while varying the fraction of gene orthologies in the simulated networks (Amount fused, top). For each network, we evaluated AUPR on one of the species for: all interactions (blue line), interactions with fusion constraints (green line), and interactions without fusion constraints (orange line). At every level of conservation, constrained interactions show the largest benefits of fusion, with the magnitude of the benefit growing with fraction of orthologous genes. 
   When the networks are highly conserved, however, even interactions that are not directly constrained through fusion are recovered more accurately as $\lambda_S$ increases.}
 \end{center}
 \end{figure}
+\pagebreak
 
-
-\begin{figure}
-\begin{center}
-  \includegraphics[scale=0.45]{fig2.pdf}
-  \caption{\label{syntheticgrid} This figure demonstrates the interaction between fusion weight ($\lambda_S$), the degree of orthology coverage of networks, and the degree of similarity between fused interactions. \textbf{A.} We generated a series of pairs of 10 TF by 200 gene networks (75\% sparsity) in two species. These networks had minimal fusion noise, so that pairs of interactions linking orthologs had nearly identical weight. We varied the fraction of genes with orthologs (y-axis) and the weight of fusion in network inference (x-axis), and measured performance as the mean-squared error of the true vs inferred network weights. 
-  In order to more clearly visualize the varying effect of fusion, performance is plotted in relative units of the of the unfused MSE (left column) for each level of orthology. 
-  This was necessary because each row represents a different pair of networks, generated with a different level of orthology, for which baseline performance varies. 
-  Performance gains from fusion are, as expected, largest when the degree of orthology is large. However, even when the fraction of genes with orthologs is relatively small (top row), we observe gains from fusion. 
-  When fused interactions are nearly identical, larger fusion weights always outperform smaller fusion weights. 
-  \textbf{B.} Simulates the case where genes which are orthologs may have different regulatory weights. 
-  We generated a series of networks as in \textbf{A.}, but with larger (7.5 $\times$) gaussian noise added the weights of fused interactions. 
-  As in \textbf{A.}, benefits from fusion were observed at every level of gene orthology. However, unlike \textbf{A.}, there was an optimal intermediate value of $\lambda_S$ that traded off between the benefits of fusion and the cost of combining heterogenous data.}
-\end{center}
-\end{figure}
+%\begin{figure}
+%\begin{center}
+%  \includegraphics[scale=0.45]{fig2.pdf}
+%  \caption{\label{syntheticgrid} This figure demonstrates the interaction between fusion weight ($\lambda_S$), the degree of orthology coverage of networks, and the degree of similarity between fused interactions. \textbf{A.} We generated a series of pairs of 10 TF by 200 gene networks (75\% sparsity) in two species. These networks had minimal fusion noise, so that pairs of interactions linking orthologs had nearly identical weight. We varied the fraction of genes with orthologs (y-axis) and the weight of fusion in network inference (x-axis), and measured performance as the mean-squared error of the true vs inferred network weights. 
+%  In order to more clearly visualize the varying effect of fusion, performance is plotted in relative units of the of the unfused MSE (left column) for each level of orthology. 
+%  This was necessary because each row represents a different pair of networks, generated with a different level of orthology, for which baseline performance varies. 
+%  Performance gains from fusion are, as expected, largest when the degree of orthology is large. However, even when the fraction of genes with orthologs is relatively small (top row), we observe gains from fusion. 
+%  When fused interactions are nearly identical, larger fusion weights always outperform smaller fusion weights. 
+%  \textbf{B.} Simulates the case where genes which are orthologs may have different regulatory weights. 
+%  We generated a series of networks as in \textbf{A.}, but with larger (7.5 $\times$) gaussian noise added the weights of fused interactions. 
+%  As in \textbf{A.}, benefits from fusion were observed at every level of gene orthology. However, unlike \textbf{A.}, there was an optimal intermediate value of $\lambda_S$ that traded off between the benefits of fusion and the cost of% combining heterogenous data.}
+%\end{center}
+%\end{figure}
 
 \begin{figure}
 \begin{center}
@@ -514,6 +505,7 @@ At the same time these methods allow us to test our assumptions on how similar b
   \textbf{B.} Shows the derivative of the adaptive fusion penalty, which is used to implement adaptive fusion through local quadratic approximation. The adaptive fusion penalty is modified from SCAD (smoothly clipped absolute deviation) and MCP (minimax concave penalty) functions and like these penalties has a zero derivative far from the origin. }
 \end{center}
 \end{figure}
+\pagebreak
 
 \begin{figure}
 \begin{center}
@@ -528,6 +520,8 @@ At the same time these methods allow us to test our assumptions on how similar b
 \end{center}
 \end{figure}
 
+\pagebreak
+
 \begin{figure}
 \begin{center}
   \includegraphics[scale=0.45]{fig5_2.pdf}
@@ -539,7 +533,7 @@ At the same time these methods allow us to test our assumptions on how similar b
   We also show the distributions of differences in weights corresponding to fused constraints created from the false orthologs and the known orthologs, when networks are solved separately. }
 \end{center}
 \end{figure}
-
+\pagebreak
 
 \begin{figure}
 \begin{center}
@@ -549,6 +543,7 @@ At the same time these methods allow us to test our assumptions on how similar b
 \end{center}
 \end{figure}
 
+\pagebreak
 \begin{figure}
 \begin{center}
   \includegraphics[scale=0.45]{fig7.pdf}
@@ -556,13 +551,6 @@ At the same time these methods allow us to test our assumptions on how similar b
 \end{center}
 \end{figure}
 
-\begin{figure}[h!]
-    \centering
-    \includegraphics[scale=.5,trim=0mm 0mm 0mm 0mm,clip]{party3.eps}
-    \caption{\label{cartoon} Schematic representation of design matrix construction. Here, the circles and hexagons correspond to different species. 
-    Bidirectional arrows represent orthology information and dotted arrows represent putative interactions between TFs and genes. 
-    Rectangles represent matrices; because weights can be solved independently unless there exists fusion constraints between them, we identify related weights and construct matrix for solving. }
-\end{figure}
 
 \end{document}
 
